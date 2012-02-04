@@ -1,0 +1,96 @@
+<% @subtabs= redis.hosts %>
+
+<script language="javascript" type="text/javascript">
+function dropdownlist(index) {
+  document.startform.rev_filter.options.length = 0;
+  switch(index) {
+	<% for host in redis.hosts %>
+	  <%= "case'#{host}':" %>
+	  <% i= 0 %>
+	  <% for rev in redis.revisions(host) %>
+	    <%= "document.startform.rev_filter.options[#{i}]= new Option('#{rev['revision'][0..6]} deployed on #{redis.fmt_date(rev['date'])}', '#{rev['revision']}' );" %>
+	  <% i+= 1 %>
+	  <% end %> break;
+	<% end %>
+  };
+  return true
+};
+
+$(document).ready(function() {
+	dropdownlist($('#host_filter').val());
+});
+</script>
+
+
+<h1>Hosts, Revisions and Worker Managers</h1>
+<table>
+    <tr>
+      <th>Host</th>
+      <th>Status</th>
+      <th>Revisions</th>
+      <th>Worker Managers</th>
+    </tr>
+    <% for host, status in redis.workers_state %>
+      <tr>
+      <td><%= host%></td>
+      <td><%= status%></td>
+      <td><%= redis.revisions(host).length %> revision(s) installed
+      <% for rev in redis.revisions(host) %>
+      <br>&nbsp;&nbsp;&nbsp;Revision <a href= <%= "https://github.com/john/reputedly/commit/#{rev['revision']}" %> ><%= "#{rev['revision'][0..6]}" %></a>
+          <%= "(deployed on #{redis.fmt_date(rev['date'])} from #{rev['branch']})" %>
+      <%end%></td>
+      <td><%= redis.workers(host).length%> manager(s) currently running
+	  <% for id, info in redis.workers(host) %>
+	  <br>&nbsp;&nbsp;&nbsp;<%= "Manager #{id} for #{info['environment']['COUNT']} workers on queue '#{info['environment']['QUEUE']}', running revision" %>
+   <a href= <%= "https://github.com/john/reputedly/commit/#{info['revision']}" %> ><%= "#{info['revision'][0..6]}" %></a>
+	  <%end%></td>
+      </tr>
+    <% end %>
+</table>
+
+
+<h1>Starting Workers</h1>
+
+
+<div class="clearfix">
+  <div class="control_panel sub_header">
+    <form id="startform" name="startform" method="post" action="/resque/telework_do_start" >
+      <span class="host_filter">
+        Host: <%= generic_filter("host_filter", "h", redis.hosts, 
+                                 "onchange=\"javascript: dropdownlist(this.options[this.selectedIndex].value);\"") %>
+      </span>
+      <span class="queue_filter">
+        Queue: <%= generic_filter("queue_filter", "q", Resque.redis.smembers('queues') << "*") %>
+        Queue: <input type="text" name="qmanual"/>
+      </span>
+      <span class="count_filter">
+        Count: <%= generic_filter("count_filter", "c", ['1'] ) %>
+      </span>
+      <span class="rev_filter">
+	    Revision: <select id="rev_filter" name="r">
+		</select>
+	  </span>
+	  <span class="env_filter">
+	    Environment: <%= generic_filter("env_filter", "e", ['(default)', 'production', 'staging', 'development', 'test'] ) %>
+		</select>
+	  </span>
+      <input type="submit" value="Start" />
+    </form>
+  </div>
+</div>
+
+<h1>Stopping Workers</h1>
+
+<form id="stopform" name="stopform" method="post" action="/resque/telework_do_stop" >
+    <span class="host_filter2">
+      Host: <%= generic_filter("host_filter2", "h2", redis.hosts) %>
+    </span>
+    <span>Manager: <input type="text" name="mid"/></span>
+    <span>Kill: <input type= "checkbox" name="kill"/></span>
+	<span><input type="submit" value="Stop" /></span>
+</form>
+
+<div>
+</div>
+
+</div>
