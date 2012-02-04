@@ -1,7 +1,7 @@
-<% @subtabs= redis.hosts %>
+<% @subtabs= ["Overview", "Status"] %>
 
 <script language="javascript" type="text/javascript">
-function dropdownlist(index) {
+function hostlist(index) {
   document.startform.rev_filter.options.length = 0;
   switch(index) {
 	<% for host in redis.hosts %>
@@ -13,22 +13,33 @@ function dropdownlist(index) {
 	  <% end %> break;
 	<% end %>
   };
-  return true
+  return true;
 };
-
+function queuelist(index) {
+	if(index != "(other)") {
+		document.startform.queue_text.value= "";		
+	}
+	return true;
+};
+function queuetext(val) {
+	if(val!="") {
+		document.startform.queue_filter.selectedIndex= 0;
+	}
+};
 $(document).ready(function() {
-	dropdownlist($('#host_filter').val());
+	document.startform.queue_filter.selectedIndex= 1;
+	hostlist($('#host_filter').val());
+	queuelist($('#queue_filter').val());
 });
 </script>
 
-
-<h1>Hosts, Revisions and Worker Managers</h1>
+<h1>Hosts, Revisions and Worker Overview</h1>
 <table>
     <tr>
       <th>Host</th>
-      <th>Status</th>
+      <th>Manager Status</th>
       <th>Revisions</th>
-      <th>Worker Managers</th>
+      <th>Workers</th>
     </tr>
     <% for host, status in redis.workers_state %>
       <tr>
@@ -39,9 +50,10 @@ $(document).ready(function() {
       <br>&nbsp;&nbsp;&nbsp;Revision <a href= <%= "https://github.com/john/reputedly/commit/#{rev['revision']}" %> ><%= "#{rev['revision'][0..6]}" %></a>
           <%= "(deployed on #{redis.fmt_date(rev['date'])} from #{rev['branch']})" %>
       <%end%></td>
-      <td><%= redis.workers(host).length%> manager(s) currently running
+      <td><%= redis.workers(host).length%> worker(s) currently running
 	  <% for id, info in redis.workers(host) %>
-	  <br>&nbsp;&nbsp;&nbsp;<%= "Manager #{id} for #{info['environment']['COUNT']} workers on queue '#{info['environment']['QUEUE']}', running revision" %>
+	  <br><form id="aaa" name="aaa" method="post" action="/resque/aaa" ><input type="submit" value= <%="\"Stop #{id}\""%> /></form>
+	    &nbsp;&nbsp;&nbsp;<%= "Manager #{id} for #{info['environment']['COUNT']} workers on queue '#{info['environment']['QUEUE']}', running revision" %>
    <a href= <%= "https://github.com/john/reputedly/commit/#{info['revision']}" %> ><%= "#{info['revision'][0..6]}" %></a>
 	  <%end%></td>
       </tr>
@@ -57,11 +69,12 @@ $(document).ready(function() {
     <form id="startform" name="startform" method="post" action="/resque/telework_do_start" >
       <span class="host_filter">
         Host: <%= generic_filter("host_filter", "h", redis.hosts, 
-                                 "onchange=\"javascript: dropdownlist(this.options[this.selectedIndex].value);\"") %>
+                                 "onchange=\"javascript: hostlist(this.options[this.selectedIndex].value);\"") %>
       </span>
       <span class="queue_filter">
-        Queue: <%= generic_filter("queue_filter", "q", Resque.redis.smembers('queues') << "*") %>
-        Queue: <input type="text" name="qmanual"/>
+        Queue: <%= generic_filter("queue_filter", "q", ["(other)"] + Resque.redis.smembers('queues') << "*",
+                                  "onchange=\"javascript: queuelist(this.options[this.selectedIndex].value);\"") %>
+        Queue: <input id="queue_text" type="text" name="qmanual" onkeyup="javascript: queuetext(this.value);" />
       </span>
       <span class="count_filter">
         Count: <%= generic_filter("count_filter", "c", ['1'] ) %>
@@ -92,5 +105,30 @@ $(document).ready(function() {
 
 <div>
 </div>
+
+<% if @status_messages %>
+<h1>Status Messages</h1>
+
+<table>
+    <tr>
+      <th>Host</th>
+      <th>Severity</th>
+      <th>Date</th>
+      <th>Message</th>
+    </tr>
+    <% for info in redis.statuses(@status_messages) %>
+    <% c= info['severity']=='Error' ? "bgcolor=\"#ff0000\"" : "" %>
+      <tr>
+	    <td <%= c %>><%= info['host'] %></td>
+	    <td <%= c %>><%= info['severity'] %></td>
+	    <td <%= c %>><%= redis.fmt_date(info['date']) %></td>
+	    <td <%= c %>><%= info['message'] %></td>
+	  </tr>
+   <% end %>
+</table>
+
+<%end%>
+
+
 
 </div>

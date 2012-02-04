@@ -13,6 +13,7 @@ module Resque
         end
         
         def start
+          send_status( 'Info', "Manager starting..." )
           loop do
             i_am_alive
             check_processes
@@ -23,10 +24,15 @@ module Resque
           end
         end
         
+        def send_status( severity, message )
+          info= { 'host'=> @HOST, 'severity' => severity, 'message'=> message,
+                  'date'=> Time.now }
+          puts info
+          status_push(info)
+        end
+        
         # cmd is a flat hash with the following: command, revision, rails_env, worker_id, worker_count, worker_queue
         def do_command( cmd )
-          puts "New command: #{cmd}"
-          puts cmd['command']
           case cmd['command']
           when 'start_worker'
             rev= cmd['revision']
@@ -37,13 +43,11 @@ module Resque
           when 'kill_worker'
             stop_worker( cmd, true )
           else
-            puts "Unknown command"
+            send_status( 'Error', "Unknown command '#{cmd['command']}'" )
           end
         end
                 
         def start_worker( cmd, path, rev )
-          puts cmd
-          puts path
           id= cmd['worker_id']
           # TODO: count... env= { "COUNT"=> cmd['worker_count'], "QUEUE"=> cmd['worker_queue'] }
           env= { "QUEUE"=> cmd['worker_queue'] }
@@ -53,17 +57,16 @@ module Resque
           info= { 'pid' => pid, 'status' => 'running', 'environment' => env, 'options' => opt, 'revision' => rev }
           @WORKERS[id]= info
           workers_add( @HOST, id, info )
-          pid
-          puts "Started #{id} with #{env}"
+          send_status( 'Info', "Starting worker #{id} (PID #{pid})" )
         end
 
         def stop_worker ( cmd, kill=false )
           id= cmd['worker_id']
           info= @WORKERS[id]
-          puts "Worker #{id} wasn't found on this machine #{@WORKERS}" unless info
+          send_status( 'Error', "Worker #{id} was not found on this host" ) unless info
           return unless info
           sig= kill ? "KILL" : "QUIT"
-          puts "Sending #{sig} to #{info['pid']}"
+          send_status( 'Info', "Stopping worker #{id} (PID #{info['pid']}) using signal #{sig}" )
           Process.kill( sig, info['pid'] )
           info['status']= kill ? 'killed' : 'exiting'
           workers_add( @HOST, id, info )
@@ -73,19 +76,26 @@ module Resque
         def check_processes
           workers_delall( @HOST )
           @WORKERS.keys.each do |id|
-            res= nil
-            begin
+            remove= false
+            unexpected_death= false
+            begin 
+              # Zombie hunt..
               res= Process.waitpid(@WORKERS[id]['pid'], Process::WNOHANG)
+              remove= true if res 
             rescue
-              res= 0
+              # Not a child.. so the process is already dead (we don't know why, maybe someone did a kill -9)
+              unexpected_death= true
+              remove= true
             end
-            if res # It's a zombie...
-              puts "Zombie #{id}"
-              #workers_rem( @HOST, id )
+            
+            if remove
+              send_status( 'Error', "Worker #{id} (PID #{@WORKERS[id]['pid']}) has unexpectedly ended" ) if unexpected_death
+              send_status( 'Info', "Worker #{id} (PID #{@WORKERS[id]['pid']}) has exited" ) unless unexpected_death
               @WORKERS.delete(id)
             else
               workers_add( @HOST, id, @WORKERS[id] )
             end
+                        
           end
         end
       

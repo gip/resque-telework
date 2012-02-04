@@ -1,6 +1,6 @@
 namespace :telework do
 
-  desc 'Register the current app into telework'
+  desc 'Register the current app into Telework'
   task :register => :environment do
     TeleworkRedis.new.register_my_revision
   end

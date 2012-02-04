@@ -37,8 +37,18 @@ module Resque
             end
             
           end
-          
+
           app.get "/#{appn.downcase}" do
+            redirect "/resque/#{appn.downcase}/Overview"
+          end
+          
+          app.get "/#{appn.downcase}/Overview" do
+            @status_messages= nil
+            my_show appn.downcase
+          end
+
+          app.get "/#{appn.downcase}/Status" do
+            @status_messages= 100
             my_show appn.downcase
           end
           

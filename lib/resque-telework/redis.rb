@@ -31,6 +31,10 @@ module Resque
         "#{key_prefix}:host:#{h}:acks"
       end
       
+      def status_key # List
+        "#{key_prefix}:status"
+      end
+      
       def alive_key( h ) # String, with TTL
         "#{key_prefix}:host:#{h}:alive"
       end
@@ -99,6 +103,11 @@ module Resque
         Resque.redis.lpush(acks_key(h), info)
         Resque.redis.ltrim(acks_key(h), 0, lim-1)
       end
+
+      def status_push( info, lim=100 )
+        Resque.redis.lpush(status_key, info.to_json )
+        Resque.redis.ltrim(status_key, 0, lim-1)
+      end
       
       # Server side
         
@@ -131,6 +140,10 @@ module Resque
 
       def acks_pop( h )
         Resque.redis.rpop(acks_key(h))
+      end
+
+      def statuses( lim=100 )
+        Resque.redis.lrange(status_key, 0, lim-1).collect { |s| ActiveSupport::JSON.decode(s) }
       end
       
       def hosts_rem( h )
