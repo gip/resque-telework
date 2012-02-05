@@ -1,4 +1,8 @@
-<% @subtabs= ["Overview", "Status", "Misc"] %>
+<% @subtabs= my_substabs %>
+<% if @refresh %>
+<META HTTP-EQUIV="refresh" CONTENT="<%= @refresh%>">
+<% end %>
+
 
 <script language="javascript" type="text/javascript">
 function hostlist(index) {
@@ -33,34 +37,8 @@ $(document).ready(function() {
 });
 </script>
 
-<h1>Hosts, Revisions and Workers</h1>
-<table>
-    <tr>
-      <th>Host</th>
-      <th>Manager Status</th>
-      <th>Revisions</th>
-      <th>Workers</th>
-    </tr>
-    <% for host, status in redis.workers_state %>
-      <tr>
-      <td><%= host%></td>
-      <td><%= status%></td>
-      <td><%= redis.revisions(host).length %> revision(s) installed
-      <% for rev in redis.revisions(host) %>
-      <br>&nbsp;&nbsp;&nbsp;Revision <a href= <%= "/resque/telework/revision/#{rev['revision']}" %> ><%= "#{rev['revision_small']}" %></a>
-          <%= "(dated #{redis.fmt_date(rev['revision_date'])} from #{rev['revision_branch']})" %>
-      <%end%></td>
-      <td><%= redis.workers(host).length%> worker(s) currently running
-	  <% for id, info in redis.workers(host) %>
-	  <br><form id="stop<%=id%>" name="stop<%=id%>" method="post" action="/resque/telework_stopit/<%=id%>" ><input type="submit" value= <%="\"Stop #{id}\""%> /></form>
-	    &nbsp;&nbsp;&nbsp;<%= "<a href=\"/resque/telework/worker/#{host}/#{id}\">Worker #{id}</a> for queue(s) '#{info['environment']['QUEUE']}', running revision" %>
-   <a href= <%= "/resque/telework/revision/#{info['revision_info']['revision']}" %> ><%= "#{info['revision_info']['revision_small']}" %></a>
-	  <%end%></td>
-      </tr>
-    <% end %>
-</table>
 
-
+<% if @scheduling %>
 <br><br>
 <h1>Starting Workers</h1>
 <br>
@@ -91,13 +69,43 @@ $(document).ready(function() {
       <input type="submit" value="Start" />
     </form>
   </div>
-</div>
+</div><br><br><br><br>
+<% end %>
 
 
-<br><br><br><br>
+<h1>Hosts, Revisions and Workers</h1>
+<table>
+    <tr>
+      <th>Host</th>
+      <th>Manager Status</th>
+      <th>Revisions</th>
+      <th>Workers</th>
+    </tr>
+    <% for host, status in redis.workers_state %>
+      <tr>
+      <td><%= host%></td>
+      <td><%= status%></td>
+      <td><%= redis.revisions(host).length %> revision(s) installed
+      <% for rev in redis.revisions(host) %>
+      <br>&nbsp;&nbsp;&nbsp;Revision <a href= <%= "/resque/telework/revision/#{rev['revision']}" %> ><%= "#{rev['revision_small']}" %></a>
+          <%= "(dated #{redis.fmt_date(rev['revision_date'])} from #{rev['revision_branch']})" %>
+      <%end%></td>
+      <td><%= redis.workers(host).length%> worker(s) currently running
+	  <% for id, info in redis.workers(host) %>
+	  <br>
+	    &nbsp;&nbsp;&nbsp;<%= "<a href=\"/resque/telework/worker/#{host}/#{id}\">Worker #{id}</a> for queue(s) '#{info['environment']['QUEUE']}', running revision" %>
+   <a href= <%= "/resque/telework/revision/#{info['revision_info']['revision']}" %> ><%= "#{info['revision_info']['revision_small']}" %></a>
+	  <form id="stop<%=id%>" name="stop<%=id%>" method="post" action="/resque/telework_stopit/<%=id%>" ><input type="submit" value= <%="\"Stop #{id}\""%> /></form>
+	  <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	<% l= "#{host}:#{info['pid']}" %><%= "<a href=\"/resque/workers/#{l}:#{info['environment']['QUEUE']}\">#{l}</a>" %>
+	  <%end%></td>
+      </tr>
+    <% end %>
+</table>
+
+<br>
 <% if @status_messages %>
 <h1>Status Messages</h1>
-<br>
 <table>
     <tr>
       <th>Host</th>

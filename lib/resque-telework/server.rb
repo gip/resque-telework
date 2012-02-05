@@ -17,6 +17,9 @@ module Resque
             def redis
               @@myredis
             end
+            def my_substabs
+              ["Overview", "Start", "Misc"]
+            end
             def my_show(page, layout = true)
               response["Cache-Control"] = "max-age=0, private, must-revalidate"
               begin
@@ -43,18 +46,19 @@ module Resque
           end
           
           app.get "/#{appn.downcase}/Overview" do
-            @status_messages= nil
+            @status_messages= 100
+            @refresh= 5
+            @scheduling= nil
             my_show appn.downcase
           end
 
-          app.get "/#{appn.downcase}/Status" do
+          app.get "/#{appn.downcase}/Start" do
             @status_messages= 100
+            @scheduling= true
             my_show appn.downcase
           end
           
           app.get "/#{appn.downcase}/Misc" do
-            #@version= Resque::Plugin::Telework::Version
-            #@version_if= Resque::Plugin::Telework::
             my_show 'misc'
           end          
           

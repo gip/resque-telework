@@ -4,8 +4,16 @@
 <% if worker %>
 
 Running on host <%= @host %>
-<br>
-TODO: add more info here
+<br><br>
+Link: <% l= "#{@host}:#{worker['pid']}" %><%= "<a href=\"/resque/workers/#{l}:#{worker['environment']['QUEUE']}\">#{l}</a>" %>
+<br><br>
+TODO: better formatting for table below!
+<table>
+	<% for k in worker.keys %>
+	<tr><th width="30"><%= k %></th><td width="600"><%= worker[k] %></td></tr>
+	<% end %>
+</table>
+
 <br>
 
 <h1>Logs</h1>
@@ -15,8 +23,8 @@ TODO: add more info here
 <%= "Logs as of #{redis.fmt_date(log['date'])}"%>
 
 <table>
-<tr><td width="30">STDERR</td><td width="600"><%= redis.text_to_html(log['log_stderr']) %></td></tr>
-<tr><td width="30">STDOUT</td><td width="600"><%= redis.text_to_html(log['log_stdout']) %></td></tr>
+<tr><th width="30">STDERR</th><td width="600"><%= redis.text_to_html(log['log_stderr']) %></td></tr>
+<tr><th width="30">STDOUT</th><td width="600"><%= redis.text_to_html(log['log_stdout']) %></td></tr>
 </table>
 
 
