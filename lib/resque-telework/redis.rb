@@ -75,7 +75,18 @@ module Resque
         Resque.redis.set(last_seen_key(h), t)
       end
       
-      def register_revision( h, rev )
+      def register_revision( h, rev, lim=30 )
+        puts rev
+        k= revisions_key(h)
+        Resque.redis.ltrim(k, 0, lim-1)
+        rem= []
+        Resque.redis.lrange(k, 0, lim-1).each do |s|
+          if ActiveSupport::JSON.decode(s)['revision']==rev[:revision]
+            rem << s
+            puts "Telework: Info: Revision #{rev['revision']} was already registered for this host, so the previous one will be unregistered" 
+          end
+        end
+        rem.each { |r| Resque.redis.lrem(k, 0, r) }
         revisions_add( h, rev )
       end
       
@@ -115,6 +126,11 @@ module Resque
         info ? ActiveSupport::JSON.decode(info) : nil
       end
       
+      def logs_add( h, id, info )
+        k= logs_key(h)
+        Resque.redis.hset(k, id, info.to_json ) 
+      end
+      
       def acks_push( h, info, lim=10 )
         Resque.redis.lpush(acks_key(h), info)
         Resque.redis.ltrim(acks_key(h), 0, lim-1)
@@ -144,6 +160,18 @@ module Resque
       
       def workers( h )
          Resque.redis.hgetall(workers_key(h)).collect { |id, info| [id,  ActiveSupport::JSON.decode(info)] }
+      end
+      
+      def workers_by_id( h, id )
+        k= workers_key(h)
+        info= Resque.redis.hget(k, id)
+        info ? ActiveSupport::JSON.decode(info) : nil
+      end
+      
+      def logs_by_id( h, id )
+        k= logs_key(h)
+        info= Resque.redis.hget(k, id)
+        info ? ActiveSupport::JSON.decode(info) : nil      
       end
       
       def unique_id

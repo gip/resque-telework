@@ -1,0 +1,30 @@
+<h1>Worker <%= @worker%></h1>
+
+<% worker= redis.workers_by_id(@host, @worker) %>
+<% if worker %>
+
+Running on host <%= @host %>
+<br>
+TODO: add more info here
+<br>
+
+<h1>Logs</h1>
+<% log= redis.logs_by_id(@host, @worker) %>
+<br>
+<% if log %>
+<%= "Logs as of #{redis.fmt_date(log['date'])}"%>
+
+<table>
+<tr><td width="30">STDERR</td><td width="600"><%= redis.text_to_html(log['log_stderr']) %></td></tr>
+<tr><td width="30">STDOUT</td><td width="600"><%= redis.text_to_html(log['log_stdout']) %></td></tr>
+</table>
+
+
+<% else %>
+Logs are not available
+<% end %>
+
+
+<% else %>
+Worker not found
+<% end %>

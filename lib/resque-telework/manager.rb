@@ -13,7 +13,7 @@ module Resque
         end
         
         def start
-          send_status( 'Info', "Manager starting..." )
+          send_status( 'Info', "Manager starting on host #{@HOST}" )
           unless check_redis
            err= "Telework: Error: Redis interface version mismatch - exciting"
            puts err
@@ -57,23 +57,38 @@ module Resque
         end
                 
         def start_worker( cmd, rev_info )
+          # Retrieving args
           path= rev_info['revision_path']
           log_path= rev_info['revision_log_path']
           log_path||= "."
           rev= rev_info['revision']
           id= cmd['worker_id']
-          # TODO: count... env= { "COUNT"=> cmd['worker_count'], "QUEUE"=> cmd['worker_queue'] }
+          # Starting the job
           env= { "QUEUE"=> cmd['worker_queue'] }
           env["RAILS_ENV"]= cmd['rails_env'] if "(default)" != cmd['rails_env']
           opt= { :in => "/dev/null", 
                  :out => "#{log_path}/telework_#{id}_stdout.log", 
                  :err => "#{log_path}/telework_#{id}_stderr.log", 
                  :chdir => path }
-          pid= spawn( env, "bundle exec rake resque:work --trace", opt)
+          exec= cmd['exec']
+          pid= spawn( env, exec, opt) # Start it!
           info= { 'pid' => pid, 'status' => 'running', 'environment' => env, 'options' => opt, 'revision_info' => rev_info }
+          # Log snapshot
+          info['log_snapshot']= cmd['log_snapshot'] if cmd['log_snapshot']
+          info['log_snapshort_size']= cmd['log_snapshot_size'] if cmd['log_snapshot']
           @WORKERS[id]= info
           workers_add( @HOST, id, info )
           send_status( 'Info', "Starting worker #{id} (PID #{pid})" )
+          # Create an helper file
+          intro = "# Telework: starting worker #{id} on host #{@HOST} at #{Time.now.strftime("%a %b %e %R %Y")}"
+          env.keys.each { |v| intro+= "\n# Telework: environment variable '#{v}' set to '#{env[v]}'" }
+          intro+= "\n# Telework: command line is: #{exec}"
+          intro+= "\n# Telework: path is: #{path}"
+          intro+= "\n# Telework: log file for stdout is: #{opt[:out]}"
+          intro+= "\n# Telework: log file for stderr is: #{opt[:err]}"
+          intro+= "\n# Telework: PID is: #{pid}"
+          intro+= "\n"
+          File.open("#{log_path}/telework_#{id}.log", 'w') { |f| f.write(intro) }
         end
 
         def stop_worker ( cmd, kill=false )
@@ -112,10 +127,35 @@ module Resque
               end
               @WORKERS.delete(id)
             else
+              update_log_snapshot(id)
               workers_add( @HOST, id, @WORKERS[id] )
             end
                         
           end
+        end
+        
+        def update_log_snapshot( id )
+          ls= @WORKERS[id]['log_snapshot']
+          return unless ls
+          last= @WORKERS[id]['last_log_snapshot']
+          last||= 0
+          now= Time.now.to_i
+          if now >= last+ls
+            puts "Updating the log for worker #{id}"
+            size= @WORKERS[id]['log_snapshot_size']
+            size||= 20
+            # Getting the logs
+            logerr= get_tail( @WORKERS[id]['options'][:err], size )
+            logout= get_tail( @WORKERS[id]['options'][:out], size )
+            # Write back
+            info= { :date => Time.now, :log_stderr => logerr, :log_stdout => logout }
+            logs_add( @HOST, id, info )
+            @WORKERS[id]['last_log_snapshot']= now
+          end 
+        end
+        
+        def get_tail( f, size )
+          `tail -n #{size} #{f}`
         end
       
       end

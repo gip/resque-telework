@@ -33,7 +33,7 @@ $(document).ready(function() {
 });
 </script>
 
-<h1>Hosts, Revisions and Worker Overview</h1>
+<h1>Hosts, Revisions and Workers</h1>
 <table>
     <tr>
       <th>Host</th>
@@ -53,7 +53,7 @@ $(document).ready(function() {
       <td><%= redis.workers(host).length%> worker(s) currently running
 	  <% for id, info in redis.workers(host) %>
 	  <br><form id="stop<%=id%>" name="stop<%=id%>" method="post" action="/resque/telework_stopit/<%=id%>" ><input type="submit" value= <%="\"Stop #{id}\""%> /></form>
-	    &nbsp;&nbsp;&nbsp;<%= "Manager #{id} for #{info['environment']['COUNT']} workers on queue(s) '#{info['environment']['QUEUE']}', running revision" %>
+	    &nbsp;&nbsp;&nbsp;<%= "<a href=\"/resque/telework/worker/#{host}/#{id}\">Worker #{id}</a> for queue(s) '#{info['environment']['QUEUE']}', running revision" %>
    <a href= <%= "/resque/telework/revision/#{info['revision_info']['revision']}" %> ><%= "#{info['revision_info']['revision_small']}" %></a>
 	  <%end%></td>
       </tr>

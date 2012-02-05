@@ -62,6 +62,12 @@ module Resque
             @revision= params[:revision]
             my_show 'revision' 
           end
+
+          app.get "/#{appn.downcase}/worker/:host/:worker" do
+            @worker= params[:worker]
+            @host= params[:host]
+            my_show 'worker' 
+          end
           
           app.post "/#{appn.downcase}_stopit/:worker" do
             @worker= params[:worker]
@@ -98,7 +104,9 @@ module Resque
             @q= @qmanual.blank? ? @queue : @qmanual
             redis.cmds_push( @host, { 'command' => 'start_worker', 'revision' => @rev,
                                       'worker_id' => redis.unique_id.to_s, 'worker_count' => @count,
-                                      'rails_env' => @env, 'worker_queue' => @q } )
+                                      'rails_env' => @env, 'worker_queue' => @q,
+                                      'exec' => "bundle exec rake resque:work --trace",
+                                      'log_snapshot' => 30 } )
             redirect "/resque/#{appn.downcase}"
           end
           
