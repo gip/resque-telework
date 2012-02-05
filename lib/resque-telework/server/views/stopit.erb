@@ -1,0 +1,31 @@
+
+<% if @kill %>
+<h1>Killing worker <%= @worker %></h1>
+<% else %>
+<h1>Stopping worker <%= @worker %></h1>
+<% end %>
+<br>
+
+<h2>
+<% if @host %>
+A command to <%= @kill ? "kill" : "stop" %> worker <%= @worker%> has been send to host <%= @host%>
+<% else %>
+Worker not found
+<% end %>
+
+<% if @host %>
+  <% unless @kill %>
+<br><br><% id= @worker %>
+
+If that doesn't work, you may just kill it<br>
+<form id="kill<%=id%>" name="kill<%=id%>" method="post" action="/resque/telework_killit/<%=id%>" ><input type="submit" value= <%="\"Kill #{id}\"" %> >
+	</form>
+
+  <% end %>
+<% end %>
+
+<br><br>
+<a href="/resque/telework">Return to main Telework page</a>
+
+</h2>
+

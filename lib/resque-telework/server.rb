@@ -52,6 +52,42 @@ module Resque
             my_show appn.downcase
           end
           
+          app.get "/#{appn.downcase}/Misc" do
+            #@version= Resque::Plugin::Telework::Version
+            #@version_if= Resque::Plugin::Telework::
+            my_show 'misc'
+          end          
+          
+          app.get "/#{appn.downcase}/revision/:revision" do
+            @revision= params[:revision]
+            my_show 'revision' 
+          end
+          
+          app.post "/#{appn.downcase}_stopit/:worker" do
+            @worker= params[:worker]
+            @host= nil
+            redis.hosts.each do |h|
+              redis.workers(h).each do |id, info|
+                @host= h if id==@worker # TODO: break nested loops
+              end
+            end
+            redis.cmds_push( @host, { 'command' => 'stop_worker', 'worker_id'=> @worker } ) if @host
+            my_show 'stopit'
+          end
+
+          app.post "/#{appn.downcase}_killit/:worker" do
+            @worker= params[:worker]
+            @host= nil
+            @kill= true
+            redis.hosts.each do |h|
+              redis.workers(h).each do |id, info|
+                @host= h if id==@worker # TODO: break nested loops
+              end
+            end
+            redis.cmds_push( @host, { 'command' => 'kill_worker', 'worker_id'=> @worker } ) if @host
+            my_show 'stopit'
+          end
+          
           app.post "/#{appn.downcase}_do_start" do
             @host= params[:h]
             @queue= params[:q]
@@ -74,7 +110,7 @@ module Resque
             redis.cmds_push( @host, { 'command' => (@kill ? 'kill_worker' : 'stop_worker'), 'worker_id'=> @mid } )            
             redirect "/resque/#{appn.downcase}"
           end
-                    
+                              
           app.tabs << appn
           
         end

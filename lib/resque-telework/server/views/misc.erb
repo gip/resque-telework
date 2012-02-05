@@ -1,0 +1,17 @@
+<% @subtabs= ["Overview", "Status", "Misc"] %>
+<h1>Miscellaneous Stuff</h1>
+
+<h2>
+<br>
+Telework, a plug for Resque
+<br><br>
+Refer to <a href="https://github.com/gip/resque-telework">https://github.com/gip/resque-telework</a> for further information
+</h2>
+<br>
+<table>
+<tr><td width="100">Telework version</td><td width="100"><%= Resque::Plugins::Telework::Version %></td></tr>
+<tr><td width="100">Redis interface version</td><td width="100"><%= Resque::Plugins::Telework::RedisInterfaceVersion %></td></tr>
+<tr><td width="100">Number of keys</td><td width="100"><%= redis.nb_keys %></td></tr>
+</table>
+
+

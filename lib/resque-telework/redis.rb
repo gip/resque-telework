@@ -7,6 +7,10 @@ module Resque
         "plugins:#{Resque::Plugins::Telework::Name}"
       end
 
+      def redis_interface_key # String
+        "#{key_prefix}:redisif"
+      end
+
       def ids_key # String
         "#{key_prefix}:ids"
       end
@@ -21,6 +25,10 @@ module Resque
         
       def workers_key( h ) # Hash
         "#{key_prefix}:host:#{h}:workers"
+      end
+      
+      def logs_key( h ) # Hash
+        "#{key_prefix}:host:#{h}:logs"        
       end
       
       def cmds_key( h ) # List
@@ -43,10 +51,22 @@ module Resque
         "#{key_prefix}:host:#{h}:last_seen"
       end
   
-      # Clients (hosts) side
+      # Check
+      def check_redis
+        res= true
+        v0= Resque::Plugins::Telework::REDIS_INTERFACE_VERSION
+        v= Resque.redis.get(redis_interface_key)
+        if v!=v0
+          Resque.redis.set(redis_interface_key, v0) unless v
+          res=false if v
+        end
+        res
+      end
   
+      # Clients (hosts) side
+    
       def i_am_alive( ttl=10 )
-        h= configatron.sources.hostname
+        h= @HOST
         t= Time.now
         k= alive_key(h)
         hosts_add(h)
@@ -55,16 +75,12 @@ module Resque
         Resque.redis.set(last_seen_key(h), t)
       end
       
-      def register_my_revision
-        rev= { :revision => configatron.sources.revision,
-          :branch => configatron.sources.branch,
-          :path => Rails.root.to_s,
-          :date => Time.now }       
-        revisions_add( configatron.sources.hostname, rev )
+      def register_revision( h, rev )
+        revisions_add( h, rev )
       end
       
       def find_revision( rev )
-        revisions(configatron.sources.hostname).each do |r|
+        revisions(@HOST).each do |r|
           return r if rev==r['revision']
         end
         nil
@@ -158,7 +174,7 @@ module Resque
         Resque.redis.smembers(hosts_key)
       end
 
-      def revisions( h, lim=10 )
+      def revisions( h, lim=30 )
         k= revisions_key(h)
         Resque.redis.ltrim(k, 0, lim-1)
         Resque.redis.lrange(k, 0, lim-1).map { |s| ActiveSupport::JSON.decode(s) }
@@ -172,12 +188,20 @@ module Resque
         Resque.redis.get(last_seen_key(h))
       end
       
+      def nb_keys
+        Resque.redis.keys("#{key_prefix}:*").length
+      end
+      
       def fmt_date( t )
         begin
           Time.parse(t).strftime("%a %b %e %R %Y")
         rescue
           "(unknown date)"
         end
+      end
+      
+      def text_to_html(s)
+        ss= s.gsub(/\n/, '<br>')
       end
         
       end

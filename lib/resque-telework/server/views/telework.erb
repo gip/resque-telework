@@ -1,4 +1,4 @@
-<% @subtabs= ["Overview", "Status"] %>
+<% @subtabs= ["Overview", "Status", "Misc"] %>
 
 <script language="javascript" type="text/javascript">
 function hostlist(index) {
@@ -8,7 +8,7 @@ function hostlist(index) {
 	  <%= "case'#{host}':" %>
 	  <% i= 0 %>
 	  <% for rev in redis.revisions(host) %>
-	    <%= "document.startform.rev_filter.options[#{i}]= new Option('#{rev['revision'][0..6]} deployed on #{redis.fmt_date(rev['date'])}', '#{rev['revision']}' );" %>
+	    <%= "document.startform.rev_filter.options[#{i}]= new Option('#{rev['revision_small']} from #{redis.fmt_date(rev['revision_date'])}', '#{rev['revision']}' );" %>
 	  <% i+= 1 %>
 	  <% end %> break;
 	<% end %>
@@ -47,22 +47,23 @@ $(document).ready(function() {
       <td><%= status%></td>
       <td><%= redis.revisions(host).length %> revision(s) installed
       <% for rev in redis.revisions(host) %>
-      <br>&nbsp;&nbsp;&nbsp;Revision <a href= <%= "https://github.com/john/reputedly/commit/#{rev['revision']}" %> ><%= "#{rev['revision'][0..6]}" %></a>
-          <%= "(deployed on #{redis.fmt_date(rev['date'])} from #{rev['branch']})" %>
+      <br>&nbsp;&nbsp;&nbsp;Revision <a href= <%= "/resque/telework/revision/#{rev['revision']}" %> ><%= "#{rev['revision_small']}" %></a>
+          <%= "(dated #{redis.fmt_date(rev['revision_date'])} from #{rev['revision_branch']})" %>
       <%end%></td>
       <td><%= redis.workers(host).length%> worker(s) currently running
 	  <% for id, info in redis.workers(host) %>
-	  <br><form id="aaa" name="aaa" method="post" action="/resque/aaa" ><input type="submit" value= <%="\"Stop #{id}\""%> /></form>
-	    &nbsp;&nbsp;&nbsp;<%= "Manager #{id} for #{info['environment']['COUNT']} workers on queue '#{info['environment']['QUEUE']}', running revision" %>
-   <a href= <%= "https://github.com/john/reputedly/commit/#{info['revision']}" %> ><%= "#{info['revision'][0..6]}" %></a>
+	  <br><form id="stop<%=id%>" name="stop<%=id%>" method="post" action="/resque/telework_stopit/<%=id%>" ><input type="submit" value= <%="\"Stop #{id}\""%> /></form>
+	    &nbsp;&nbsp;&nbsp;<%= "Manager #{id} for #{info['environment']['COUNT']} workers on queue(s) '#{info['environment']['QUEUE']}', running revision" %>
+   <a href= <%= "/resque/telework/revision/#{info['revision_info']['revision']}" %> ><%= "#{info['revision_info']['revision_small']}" %></a>
 	  <%end%></td>
       </tr>
     <% end %>
 </table>
 
 
+<br><br>
 <h1>Starting Workers</h1>
-
+<br>
 
 <div class="clearfix">
   <div class="control_panel sub_header">
@@ -92,23 +93,11 @@ $(document).ready(function() {
   </div>
 </div>
 
-<h1>Stopping Workers</h1>
 
-<form id="stopform" name="stopform" method="post" action="/resque/telework_do_stop" >
-    <span class="host_filter2">
-      Host: <%= generic_filter("host_filter2", "h2", redis.hosts) %>
-    </span>
-    <span>Manager: <input type="text" name="mid"/></span>
-    <span>Kill: <input type= "checkbox" name="kill"/></span>
-	<span><input type="submit" value="Stop" /></span>
-</form>
-
-<div>
-</div>
-
+<br><br><br><br>
 <% if @status_messages %>
 <h1>Status Messages</h1>
-
+<br>
 <table>
     <tr>
       <th>Host</th>
