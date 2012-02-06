@@ -12,25 +12,31 @@ namespace :telework do
   task :start_daemon => :environment do
     cfg= find_configuration
     host= cfg[:hostname]
-    klass= Resque::Plugins::Telework::Manager.new(cfg)
-    if klass.is_alive(host)
+    daemon= Resque::Plugins::Telework::Manager.new(cfg)
+    if daemon.is_alive(host)
       msg= "There is already a daemon running on #{host}"
-      klass.send_status( 'Error', msg)
-      klass.send_status( 'Error', "This daemon (PID #{Process.pid}) cannot be started and will terminare now")
+      daemon.send_status( 'Error', msg)
+      daemon.send_status( 'Error', "This daemon (PID #{Process.pid}) cannot be started and will terminare now")
       return nil
     end
-    logf= 'telework_daemon.log'
-    lpid= 'telework_daemon.pid'
+    logp= cfg[:daemon_log_path]
+    logp||= "."
+    logf= "#{logp}/telework_daemon.log"
+    lpid= "#{logp}/telework_daemon.pid"
+    
+    # Forking
     pid = fork do
       File.open(logf, 'w') do |lf|
         $stdout.reopen(lf)
         $stderr.reopen(lf)
       end
-      Process.setsid
-      klass.start
-      File.delete(lpid)
+      Process.setsid      # I'm grown up now
+      daemon.start        # Start the daemon
+      File.delete(lpid)   # Delete the pid file
     end
-    open(lpid, 'w') { |f| f.write("#{pid}\n") } if pid
+    
+    open(lpid, 'w') { |f| f.write("#{pid}\n") } if pid  # Create the pid file
+    
   end
   
   desc 'Run the Telework daemon'

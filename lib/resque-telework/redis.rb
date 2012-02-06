@@ -4,7 +4,7 @@ module Resque
       module Redis
       
       def key_prefix
-        "plugins:#{Resque::Plugins::Telework::Name}"
+        "plugins:#{Resque::Plugins::Telework::Nickname}"
       end
 
       def redis_interface_key # String

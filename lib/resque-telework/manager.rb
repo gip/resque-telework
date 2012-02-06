@@ -8,15 +8,16 @@ module Resque
         def initialize(cfg)
           @RUN_DAEMON= true
           @HOST= cfg[:hostname]
-          @SLEEP= 2
+          @SLEEP= cfg[:daemon_pooling_interval]
           @WORKERS= {}
           @STOPPED= []
         end
         
+        # The manager (e.g. daemon) main loop
         def start
           send_status( 'Info', "Daemon (PID #{Process.pid}) starting on host #{@HOST}" )
           unless check_redis # Check the Redis interface version
-           err= "Telework: Error: Redis interface version mismatch - exciting"
+           err= "Telework: Error: Redis interface version mismatch, exiting"
            puts err # We can't use send_status() as it relies on Redis so we just show a message
            raise err
           end
@@ -24,31 +25,33 @@ module Resque
             send_status( 'Error', "There is already a daemon running on #{@HOST}")
             send_status( 'Error', "This daemon (PID #{Process.pid}) cannot be started and will terminare now")
           end
-          loop do
-            while @RUN_DAEMON do
-              i_am_alive
-              check_processes
-              while cmd= cmds_pop( @HOST ) do
-                do_command(cmd)
+          loop do                                # The main loop
+            while @RUN_DAEMON do                 # If there is no request to stop
+              i_am_alive                         # Notify the system that the daemon is alive
+              check_processes                    # Check the status of the child processes (to catch zombies)
+              while cmd= cmds_pop( @HOST ) do    # Pop a command in the command queue
+                do_command(cmd)                  # Execute it
               end
-              sleep @SLEEP
+              sleep @SLEEP                       # Sleep
             end
+                                                 # A stop request has been received
             send_status( 'Info', "A stop request has been received and the #{@HOST} daemon will now terminate") if @WORKERS.empty?
             break if @WORKERS.empty?
             send_status( 'Error', "A stop request has been received by the #{@HOST} daemon but there are still running worker(s) so it will keep running") unless @WORKERS.empty?
             @RUN_DAEMON= true
           end
-        rescue Interrupt
-          send_status( 'Info', "Daemon interrupted, exiting gracefully") if @WORKERS.empty?
-          send_status( 'Error', "Daemon interrupted, exiting, running workers may now unexpectedly terminate") unless @WORKERS.empty?
-        rescue SystemExit
+        rescue Interrupt         # Control-C
+          send_status( 'Info', "Interruption for #{@HOST} daemon, exiting gracefully") if @WORKERS.empty?
+          send_status( 'Error', "Interruption for #{@HOST} daemon, exiting, running workers may now unexpectedly terminate") unless @WORKERS.empty?
+        rescue SystemExit        # Exit has been called
           send_status( 'Info', "Exit called in #{@HOST} daemon") if @WORKERS.empty?
           send_status( 'Error', "Exit called in #{@HOST} daemon but workers are still running") unless @WORKERS.empty?
-        rescue Exception => e
+        rescue Exception => e    # Other exceptions
           send_status( 'Error', "Exception #{e.message}")
           send_status( 'Error', "Exception should not be raised in the #{@HOST} daemon, please submit a bug report")
         end
         
+        # Add a status message on the status queue
         def send_status( severity, message )
           puts "Telework: #{severity}: #{message}"
           info= { 'host'=> @HOST, 'severity' => severity, 'message'=> message,
@@ -56,7 +59,7 @@ module Resque
           status_push(info)
         end
         
-        # cmd is a flat hash with the following: command, revision, rails_env, worker_id, worker_count, worker_queue
+        # Execute a command synchronously
         def do_command( cmd )
           case cmd['command']
           when 'start_worker'
@@ -74,7 +77,8 @@ module Resque
             send_status( 'Error', "Unknown command '#{cmd['command']}'" )
           end
         end
-                
+        
+        # Start a task
         def start_worker( cmd, rev_info )
           # Retrieving args
           path= rev_info['revision_path']

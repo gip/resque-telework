@@ -8,12 +8,12 @@ Telework depends on Resque 1.19 and Redis 2.2
 Description
 -----------
 
-Telework is a [Resque](https://github.com/defunkt/resque) plugin allowing to control workers by selecting the host, the queue(s) and the code revision to be used to run the worker. It it possible to start and stop workers remotely as well as taking a look to the last lines of the logs.
+Telework is a [Resque](https://github.com/defunkt/resque) plugin aimed at controlling Resque workers from the web UI. It makes it easy to manage workers on a complex systems that includes several hosts, different queue(s) and an evolving source code that is deployed several times a day. Beyond starting and stopping workers on remote hosts, the plugin makes it easy to switch between code revisions, gives a partial view of each worker's log (stdout and stderr) and maintains a status of each workers.
 
 Telework comes with three main components
 
-* A web interface that smoothly integrates in Resque by adding it's own 'Telework' tab
-* A daemon process to be started on each host (`rake telework:start_daemon` starts a new daemon and returns while `rake telework:daemon` runs the new daemon interactively)
+* A web interface that smoothly integrates in Resque and adds its own tab
+* A daemon process to be started on each host (`rake telework:start_daemon` starts a new daemon and returns while `rake telework:daemon` runs the daemon interactively)
 * A registration command (`rake telework:register_revision`) to be called by the deployment script when a new revision is added on the host
 
 Note that currently (Telework 0.0.1), the daemon process is included in the main app, which is not really elegant as the full Rails environment needs to be loaded to run the daemon. A light-weight daemon is currently being developed and should be ready in the coming weeks.
@@ -36,7 +36,7 @@ gem 'resque-telework'
 Configuration
 -------------
 
-Telework requires a configuration class to be added to your app. An example class (show below and in the `config/example/telework.rb`) is included for convenience. This file should be modified to reflect your own environment. It is necessary to make sure the file is loaded at startup by Rails as Telework will instantiate the class upon startup. The simplest way to achieve this is to copy the modified `telework.rb` file into your app `config/initializers` directory.
+Telework requires a configuration class to be added to your app. An example class (show below and in the `config/example/telework.rb`) is included for convenience. This file should be modified to reflect your own environment. It is necessary to make sure the file is loaded at startup by Rails as Telework will instantiate the class upon startup. The simplest way to achieve this is to copy the modified `telework_config.rb` file into your app `config/initializers` directory.
 
 The `TeleworkConfig` class allows for Telework to retrieve information regarding versioning of your source code, hostname and related data. As the example class has been developed for git and github, users of these revision control systems will potentially have to update a single line in the example file. Subversion users will have to do more work as TeleworkConfig needs to be able to retrieve revision information.
 
@@ -151,6 +151,14 @@ gilles@myworkhost0 $ rake telework:register_revision
 ```
 Note that it is not necessary to stop and restart the daemon. Restarting the daemon should only happens when the Telework gem is updated.
 
+Known Issues
+------------
+
+For version 0.0.1:
+
+* The daemon crashes if any of the log directories do not exist
+
+
 Bugs
 ----
 
@@ -159,15 +167,19 @@ Please report bugs on [github](https://github.com/gip/resque-telework/issues) or
 Todo
 ----
 
-The following features are planned in coming versions
+The following features are are being developed and should be available shortly:
 
-* Better window layout 
-* Starting multiple workers at once
+* Improved window layout
+* Seamless update of workers to newer revision
 * Worker history (there is currently no history for terminated workers)
-* Statistics
 * Light-weight daemon (in Ruby and Haskell)
+
+The following features are planned for future releases:
+
+* Starting multiple workers at once
+* Statistics
 
 Thanks
 ------
 
-I would like to thanks [RG Labs](http://www.rglabsinc.com/) for the awesome environment and support to open-source development 
+I would like to thank [RG Labs](http://www.rglabsinc.com/) for the awesome environment and support to open-source development 
