@@ -44,7 +44,7 @@ namespace :telework do
   desc 'Run the Telework daemon'
   task :daemon => :environment do
     check_configuration
-    Resque::Plugins::Telework::Manager.new(find_configuration).start
+    Resque::Plugins::Telework::Manager.new(TeleworkConfig.new.host_config).start
   end
 
   def check_configuration
