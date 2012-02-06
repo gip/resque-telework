@@ -8,10 +8,10 @@ Telework is a plug for Resque
 
 <br>
 <table>
-<tr><td width="100">Telework version</td><td width="600"><%= Resque::Plugins::Telework::Version %></td></tr>
-<tr><td width="100">Redis interface version</td><td width="600"><%= Resque::Plugins::Telework::RedisInterfaceVersion %></td></tr>
-<tr><td width="100">Number of keys in Redis</td><td width="600"><%= redis.nb_keys %></td></tr>
-<tr><td width="100">Number of running workers</td><td width="600"><%= c=0; redis.hosts.each { |h| c+= redis.workers(h).length }; c %></td></tr>
+<tr><th width="100">Telework version</th><td width="500"><%= Resque::Plugins::Telework::Version %></td></tr>
+<tr><th width="100">Redis interface version</th><td width="500"><%= Resque::Plugins::Telework::RedisInterfaceVersion %></td></tr>
+<tr><th width="100">Number of keys in Redis</th><td width="500"><%= redis.nb_keys %></td></tr>
+<tr><th width="100">Number of running workers</th><td width="500"><%= c=0; redis.hosts.each { |h| c+= redis.workers(h).length }; c %></td></tr>
 </table>
 
 <br><br>

@@ -10,8 +10,9 @@ namespace :telework do
   
   desc 'Start a Telework daemon on this machine and returns'
   task :start_daemon => :environment do
-    host= find_configuration[:hostname]
-    klass= Resque::Plugins::Telework::Manager.new(host)
+    cfg= find_configuration
+    host= cfg[:hostname]
+    klass= Resque::Plugins::Telework::Manager.new(cfg)
     if klass.is_alive(host)
       msg= "There is already a daemon running on #{host}"
       klass.send_status( 'Error', msg)
@@ -34,7 +35,7 @@ namespace :telework do
   
   desc 'Run the Telework daemon'
   task :daemon => :environment do
-    Resque::Plugins::Telework::Manager.new(find_configuration[:hostname]).start
+    Resque::Plugins::Telework::Manager.new(find_configuration).start
   end
 
   def find_configuration

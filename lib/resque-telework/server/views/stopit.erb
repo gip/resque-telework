@@ -6,7 +6,6 @@
 <% end %>
 <br>
 
-<h2>
 <% if @host %>
 A command to <%= @kill ? "kill" : "stop" %> worker <%= @worker%> has been send to host <%= @host%>
 <% else %>
@@ -27,5 +26,4 @@ If that doesn't work, you may just kill it<br>
 <br><br>
 <a href="/resque/telework">Return to main Telework page</a>
 
-</h2>
 

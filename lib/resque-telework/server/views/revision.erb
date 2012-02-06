@@ -13,12 +13,12 @@
 <% else %>
 <br>
 <table>
-<tr><td width="100">Revision</td><td width="100"><%= res[res.keys[0]]['revision'] %></td></tr>
-<tr><td width="100">Revision date</td><td width="100"><%= redis.fmt_date(res[res.keys[0]]['revision_date']) %></td></tr>
-<tr><td>Short revision</td><td><%= res[res.keys[0]]['revision_small'] %></td></tr>
-<tr><td>Link</td><td><% l=res[res.keys[0]]['revision_link']%>  <a href="<%= l%>"><%= l %></a></td></tr>
-<tr><td>Deployed on</td><td><%= res.keys * ", " %></a></td></tr>
-<tr><td>Message</td><td><%=  redis.text_to_html(res[res.keys[0]]['revision_info'])%></a></td></tr>
+<tr><th width="100">Revision</th><td width="100"><%= res[res.keys[0]]['revision'] %></td></tr>
+<tr><th>Revision (short)</th><td><%= res[res.keys[0]]['revision_small'] %></td></tr>
+<tr><th width="100">Revision date</th><td width="100"><%= redis.fmt_date(res[res.keys[0]]['revision_date']) %></td></tr>
+<tr><th>Link</th><td><% l=res[res.keys[0]]['revision_link']%>  <a href="<%= l%>"><%= l %></a></td></tr>
+<tr><th>Deployed on</th><td><%= res.keys * ", " %></a></td></tr>
+<tr><th>Commit log</th><td><%=  redis.text_to_html(res[res.keys[0]]['revision_info'])%></a></td></tr>
 </table>
 
    

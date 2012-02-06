@@ -13,7 +13,7 @@ Telework is a [Resque](https://github.com/defunkt/resque) plugin allowing to con
 Telework comes with three main components
 
 * A web interface that smoothly integrates in Resque by adding it's own 'Telework' tab
-* A daemon process to be started on each host (`rake telework:start_daemon` starts a new daemon and returns while `rake telework:daemon` starts the new daemon interactively)
+* A daemon process to be started on each host (`rake telework:start_daemon` starts a new daemon and returns while `rake telework:daemon` runs the new daemon interactively)
 * A registration command (`rake telework:register_revision`) to be called by the deployment script when a new revision is added on the host
 
 Note that currently (Telework 0.0.1), the daemon process is included in the main app, which is not really elegant as the full Rails environment needs to be loaded to run the daemon. A light-weight daemon is currently being developed and should be ready in the coming weeks.
@@ -39,6 +39,8 @@ Configuration
 Telework requires a configuration class to be added to your app. An example class (show below and in the `config/example/telework.rb`) is included for convenience. This file should be modified to reflect your own environment. It is necessary to make sure the file is loaded at startup by Rails as Telework will instantiate the class upon startup. The simplest way to achieve this is to copy the modified `telework.rb` file into your app `config/initializers` directory.
 
 The `TeleworkConfig` class allows for Telework to retrieve information regarding versioning of your source code, hostname and related data. As the example class has been developed for git and github, users of these revision control systems will potentially have to update a single line in the example file. Subversion users will have to do more work as TeleworkConfig needs to be able to retrieve revision information.
+
+Btw, I'm in the process of refactoring the configuration class to make it easier to use.
 
 ```ruby
 # Initializer for the resque-telework config plugin
@@ -159,6 +161,7 @@ Todo
 
 The following features are planned in coming versions
 
+* Better window layout 
 * Starting multiple workers at once
 * Worker history (there is currently no history for terminated workers)
 * Statistics

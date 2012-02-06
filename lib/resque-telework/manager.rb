@@ -5,8 +5,8 @@ module Resque
         
         include Resque::Plugins::Telework::Redis
         
-        def initialize(host)
-          @HOST= host
+        def initialize(cfg)
+          @HOST= cfg[:hostname]
           @SLEEP= 2
           @WORKERS= {}
           @STOPPED= []
