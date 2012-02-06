@@ -36,9 +36,9 @@ gem 'resque-telework'
 Configuration
 -------------
 
-Telework requires a configuration class to be added to your app. An example class (show below and in the config/example/telework.rb) is included for convenience. This file should be modified to reflect your own environment. It is necessary to make sure the file is loaded at startup by Rails as Telework will instantiate the class upon startup. The simplest way to achieve this is to copy the modified telework.rb file into your app config/initializers directory.
+Telework requires a configuration class to be added to your app. An example class (show below and in the `config/example/telework.rb`) is included for convenience. This file should be modified to reflect your own environment. It is necessary to make sure the file is loaded at startup by Rails as Telework will instantiate the class upon startup. The simplest way to achieve this is to copy the modified `telework.rb` file into your app `config/initializers` directory.
 
-The TeleworkConfig class allows for your app to retrieve information regarding versioning of your source code, hostname and related data. As the example class has been developed for git and github, users of these revision control systems will potentially have to update a single line in the example file. Subversion users will have to do more work as TeleworkConfig needs to be able to retrieve revision information.
+The `TeleworkConfig` class allows for Telework to retrieve information regarding versioning of your source code, hostname and related data. As the example class has been developed for git and github, users of these revision control systems will potentially have to update a single line in the example file. Subversion users will have to do more work as TeleworkConfig needs to be able to retrieve revision information.
 
 ```ruby
 # Initializer for the resque-telework config plugin
@@ -130,25 +130,29 @@ Workflow
 After Telework is installed and the TeleworkConfig class implemented according to your environment, the code is deployed to all the relevant hosts. If you're using [Capistrano](https://github.com/capistrano/capistrano) it may look like:
 
 ```
-gilles@myapphost $ cap deploy -S servers=myapphost,myhost0,myhost1,myhost2
+gilles@myapphost $ cap deploy -S servers=myapphost,myworkhost0,myworkhost1,myworkhost2
 ```
 
-The code is therefore deployed to the main app box (myapphost) and all the other 'worker' hosts. On each of these hosts, it is now necessary to register the new revision with Telework and start the Telework daemon. For instance on host0, this is done using the following commands:
+The code is therefore deployed to the main app box (`myapphost`) and all the other 'worker' hosts. On each of these hosts, it is now necessary to register the new revision with Telework and start the Telework daemon. For instance on host0, this is done using the following commands:
 
 ```
-gilles@myhost0 $ rake telework:register_revision
-gilles@myhost0 $ rake telework:start_daemon
+gilles@myworkhost0 $ rake telework:register_revision
+gilles@myworkhost0 $ rake telework:start_daemon
 ```
 
-The main Telework tab should now show the new box as alive. It is now possible to start new workers on these boxes using the new web-based UI.
+The main Telework tab should now show the new box as alive. It is now possible to start new workers on these boxes using the new web-based UI, saving a lot of ssh/screen commands.
 
 Going forward, when a new version of the app is deployed on host, it is necessary to register the new revision using the following command:
 
 ```
-gilles@myhost0 $ rake telework:register_revision
+gilles@myworkhost0 $ rake telework:register_revision
 ```
-Note that it is not necessary to stop/restart the daemon. Restarting the daemon should only happens when the Telework gem is updated.
+Note that it is not necessary to stop and restart the daemon. Restarting the daemon should only happens when the Telework gem is updated.
 
+Bugs
+----
+
+Please report bugs on [github](https://github.com/gip/resque-telework/issues) or directly to [gilles.github@gmail.com](gilles.github@gmail.com)
 
 Todo
 ----
@@ -157,7 +161,7 @@ The following features are planned in coming versions
 
 * Starting multiple workers at once
 * Worker history (there is currently no history for terminated workers)
-* Statistic
+* Statistics
 * Light-weight daemon (in Ruby and Haskell)
 
 Thanks
