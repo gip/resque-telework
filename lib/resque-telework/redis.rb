@@ -76,7 +76,6 @@ module Resque
       end
       
       def register_revision( h, rev, lim=30 )
-        puts rev
         k= revisions_key(h)
         Resque.redis.ltrim(k, 0, lim-1)
         rem= []

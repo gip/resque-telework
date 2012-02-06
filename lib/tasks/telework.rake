@@ -2,7 +2,8 @@ namespace :telework do
 
   desc 'Register a new revision into Telework'
   task :register_revision => :environment do 
-    cfg= find_configuration
+    check_configuration    
+    cfg= TeleworkConfig.new.config
     host= cfg[:hostname]
     cfg.delete(:hostname)
     TeleworkRedis.new.register_revision(host, cfg)
@@ -10,7 +11,8 @@ namespace :telework do
   
   desc 'Start a Telework daemon on this machine and returns'
   task :start_daemon => :environment do
-    cfg= find_configuration
+    check_configuration
+    cfg= TeleworkConfig.new.host_config
     host= cfg[:hostname]
     daemon= Resque::Plugins::Telework::Manager.new(cfg)
     if daemon.is_alive(host)
@@ -41,18 +43,17 @@ namespace :telework do
   
   desc 'Run the Telework daemon'
   task :daemon => :environment do
+    check_configuration
     Resque::Plugins::Telework::Manager.new(find_configuration).start
   end
 
-  def find_configuration
-    # Configuration is done through a TeleworkConfig class - please read the doc!
-    begin
-      cfg= TeleworkConfig.new.config
-    rescue NameError => e
-      puts e.message
-      raise "It is likely that the TeleworkConfig class couldn't be found (it should have been added to your app)"
+  def check_configuration
+    klass = Module.const_get('TeleworkConfig')
+    unless klass.is_a?(Class)
+      msg= "Telework: Error: It is likely that the TeleworkConfig class couldn't be found (it should have been added to your app)"
+      puts msg
+      raise msg
     end
-    cfg
   end
   
 end

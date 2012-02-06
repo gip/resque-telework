@@ -2,17 +2,15 @@
 <h1>Miscellaneous Stuff</h1>
 
 
-<br>
-Telework is a plug for Resque
+Telework is a plugin for Resque
+<br><br>
+Please refer to <a href="https://github.com/gip/resque-telework">https://github.com/gip/resque-telework</a> for further information
 
-
-<br>
+<br><br>
 <table>
 <tr><th width="100">Telework version</th><td width="500"><%= Resque::Plugins::Telework::Version %></td></tr>
 <tr><th width="100">Redis interface version</th><td width="500"><%= Resque::Plugins::Telework::RedisInterfaceVersion %></td></tr>
 <tr><th width="100">Number of keys in Redis</th><td width="500"><%= redis.nb_keys %></td></tr>
+<tr><th width="100">Redis key prefix</th><td width="500"><%= redis.key_prefix %></td></tr>
 <tr><th width="100">Number of running workers</th><td width="500"><%= c=0; redis.hosts.each { |h| c+= redis.workers(h).length }; c %></td></tr>
 </table>
-
-<br><br>
-Please refer to <a href="https://github.com/gip/resque-telework">https://github.com/gip/resque-telework</a> for further information
