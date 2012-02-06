@@ -18,6 +18,11 @@ Telework comes with three main components
 
 Note that currently (Telework 0.0.1), the daemon process is included in the main app, which is not really elegant as the full Rails environment needs to be loaded to run the daemon. A light-weight daemon is currently being developed and should be ready in the coming weeks.
 
+Overview of the WebUI
+---------------------
+
+![Main Telework Window](https://github.com/gip/resque-telework/raw/master/doc/screenshots/view_overview.png)
+
 Installation
 ------------
 
