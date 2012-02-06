@@ -84,7 +84,16 @@ $(document).ready(function() {
     <% for host, status in redis.workers_state %>
       <tr>
       <td><%= host%></td>
-      <td><%= status%></td>
+      <% if 'Alive'==status %>
+        <td> <table><tr><td>Alive</td></tr>
+	                <tr><td>
+	                	<form id="stopd" name="stopd" method="post" action="/resque/telework_stopitd/<%= host %>" ><input type="submit" value= <%="\"Stop\""%> /></form>
+	                </td></tr>
+	         </table>
+        </td>
+      <% else %>
+        <td><%= status%></td>
+      <% end %>
       <td><%= redis.revisions(host).length %> revision(s) installed
       <table><tr>
 	     <th>Revision</th>

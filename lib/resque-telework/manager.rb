@@ -6,6 +6,7 @@ module Resque
         include Resque::Plugins::Telework::Redis
         
         def initialize(cfg)
+          @RUN_DAEMON= true
           @HOST= cfg[:hostname]
           @SLEEP= 2
           @WORKERS= {}
@@ -24,19 +25,28 @@ module Resque
             send_status( 'Error', "This daemon (PID #{Process.pid}) cannot be started and will terminare now")
           end
           loop do
-            i_am_alive
-            check_processes
-            while cmd= cmds_pop( @HOST ) do
-              do_command(cmd)
+            while @RUN_DAEMON do
+              i_am_alive
+              check_processes
+              while cmd= cmds_pop( @HOST ) do
+                do_command(cmd)
+              end
+              sleep @SLEEP
             end
-            sleep @SLEEP
+            send_status( 'Info', "A stop request has been received and the #{@HOST} daemon will now terminate") if @WORKERS.empty?
+            break if @WORKERS.empty?
+            send_status( 'Error', "A stop request has been received by the #{@HOST} daemon but there are still running worker(s) so it will keep running") unless @WORKERS.empty?
+            @RUN_DAEMON= true
           end
         rescue Interrupt
           send_status( 'Info', "Daemon interrupted, exiting gracefully") if @WORKERS.empty?
           send_status( 'Error', "Daemon interrupted, exiting, running workers may now unexpectedly terminate") unless @WORKERS.empty?
+        rescue SystemExit
+          send_status( 'Info', "Exit called in #{@HOST} daemon") if @WORKERS.empty?
+          send_status( 'Error', "Exit called in #{@HOST} daemon but workers are still running") unless @WORKERS.empty?
         rescue Exception => e
           send_status( 'Error', "Exception #{e.message}")
-          send_status( 'Error', "Exception should not be thrown here, please submit a bug report")
+          send_status( 'Error', "Exception should not be raised in the #{@HOST} daemon, please submit a bug report")
         end
         
         def send_status( severity, message )
@@ -55,6 +65,11 @@ module Resque
             stop_worker( cmd )
           when 'kill_worker'
             stop_worker( cmd, true )
+          when 'stop_daemon'
+            @RUN_DAEMON= false
+          when 'kill_daemon'
+            send_status( 'Error', "A kill request has been received, the daemon on #{@HOST} is now brutally terminating by calling exit()")
+            exit # Bye
           else
             send_status( 'Error', "Unknown command '#{cmd['command']}'" )
           end
@@ -145,7 +160,6 @@ module Resque
           last||= 0
           now= Time.now.to_i
           if now >= last+ls
-            puts "Updating the log for worker #{id}"
             size= @WORKERS[id]['log_snapshot_size']
             size||= 20
             # Getting the logs

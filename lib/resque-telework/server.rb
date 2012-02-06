@@ -76,12 +76,30 @@ module Resque
           app.post "/#{appn.downcase}_stopit/:worker" do
             @worker= params[:worker]
             @host= nil
+            @daemon= nil
             redis.hosts.each do |h|
               redis.workers(h).each do |id, info|
                 @host= h if id==@worker # TODO: break nested loops
               end
             end
             redis.cmds_push( @host, { 'command' => 'stop_worker', 'worker_id'=> @worker } ) if @host
+            my_show 'stopit'
+          end
+
+          app.post "/#{appn.downcase}_stopitd/:host" do
+            # Todo - check that the host indeed exists
+            @host= params[:host]
+            @daemon= true
+            redis.cmds_push( @host, { 'command' => 'stop_daemon' } )
+            my_show 'stopit'
+          end
+
+          app.post "/#{appn.downcase}_killitd/:host" do
+            # Todo - check that the host indeed exists
+            @host= params[:host]
+            @daemon= true
+            @kill= true
+            redis.cmds_push( @host, { 'command' => 'kill_daemon' } )
             my_show 'stopit'
           end
 

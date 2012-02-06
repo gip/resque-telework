@@ -1,13 +1,14 @@
+<% object= @daemon ? "#{@host} daemon" :  "worker #{@worker}" %>
 
 <% if @kill %>
-<h1>Killing worker <%= @worker %></h1>
+<h1>Killing <%= object %></h1>
 <% else %>
-<h1>Stopping worker <%= @worker %></h1>
+<h1>Stopping <%= object %></h1>
 <% end %>
 <br>
 
 <% if @host %>
-A command to <%= @kill ? "kill" : "stop" %> worker <%= @worker%> has been send to host <%= @host%>
+A command to <%= @kill ? "kill" : "stop" %> <%= object %> has been send to host <%= @host%>
 <% else %>
 Worker not found
 <% end %>
@@ -17,8 +18,13 @@ Worker not found
 <br><br><% id= @worker %>
 
 If that doesn't work, you may just kill it<br>
+<% unless @daemon %>
 <form id="kill<%=id%>" name="kill<%=id%>" method="post" action="/resque/telework_killit/<%=id%>" ><input type="submit" value= <%="\"Kill #{id}\"" %> >
-	</form>
+</form>
+<% else %>
+<form id="kill" name="kill" method="post" action="/resque/telework_killitd/<%=@host%>" ><input type="submit" value= <%="\"Kill\"" %> >
+</form>
+<% end %>
 
   <% end %>
 <% end %>
