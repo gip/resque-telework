@@ -23,6 +23,8 @@ Overview of the WebUI
 
 ![Main Telework Window](https://github.com/gip/resque-telework/raw/master/doc/screenshots/view_overview.png)
 
+The screenshot above shows the initial version of the Telework main window. The top table shows the active hosts, the different revision and the running workers. The bottom table shows the different status messages received from the hosts. Not that the layout is being improved and will look better soon :)
+
 Installation
 ------------
 
