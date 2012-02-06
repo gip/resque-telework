@@ -13,12 +13,16 @@ module Resque
         end
         
         def start
-          send_status( 'Info', "Manager starting on host #{@HOST}" )
-          unless check_redis
+          send_status( 'Info', "Daemon (PID #{Process.pid}) starting on host #{@HOST}" )
+          unless check_redis # Check the Redis interface version
            err= "Telework: Error: Redis interface version mismatch - exciting"
-           puts err
+           puts err # We can't use send_status() as it relies on Redis so we just show a message
            raise err
-          end          
+          end
+          if is_alive(@HOST)  # Only one deamon can be run on a given host at the moment (this may change)
+            send_status( 'Error', "There is already a daemon running on #{@HOST}")
+            send_status( 'Error', "This daemon (PID #{Process.pid}) cannot be started and will terminare now")
+          end
           loop do
             i_am_alive
             check_processes
@@ -28,8 +32,8 @@ module Resque
             sleep @SLEEP
           end
         rescue Interrupt
-          send_status( 'Info', "Manager interrupted, exiting gracefully") if @WORKERS.empty?
-          send_status( 'Error', "Manager interrupted, exiting, running workers may now unexpectedly terminate") unless @WORKERS.empty?
+          send_status( 'Info', "Daemon interrupted, exiting gracefully") if @WORKERS.empty?
+          send_status( 'Error', "Daemon interrupted, exiting, running workers may now unexpectedly terminate") unless @WORKERS.empty?
         rescue Exception => e
           send_status( 'Error', "Exception #{e.message}")
           send_status( 'Error', "Exception should not be thrown here, please submit a bug report")

@@ -1,7 +1,7 @@
 Resque Telework
 ===============
 
-[github.com/gip/resque-telework](https://github.com/git/resque-telework)
+[github.com/gip/resque-telework](https://github.com/gip/resque-telework)
 
 Telework depends on Resque 1.19 and Redis 2.2
 
@@ -10,10 +10,13 @@ Description
 
 Telework is a [Resque](https://github.com/defunkt/resque) plugin allowing to control workers by selecting the host, the queue(s) and the code revision to be used to run the worker. It it possible to start and stop workers remotely as well as taking a look to the last lines of the logs.
 
-Telework has three main components
-* A web interface that integrates in Resque by adding it's own 'Telework' tab
-* A manager process to be started on each host (`rake telework:run_manager`)
+Telework comes with three main components
+
+* A web interface that smoothly integrates in Resque by adding it's own 'Telework' tab
+* A daemon process to be started on each host (`rake telework:start_daemon` starts a new daemon and returns while `rake telework:daemon` starts the new daemon interactively)
 * A registration command (`rake telework:register_revision`) to be called by the deployment script when a new revision is added on the host
+
+Note that currently (Telework 0.0.1), the daemon process is included in the main app, which is not really elegant as the full Rails environment needs to be loaded to run the daemon. A light-weight daemon is currently being developed and should be ready in the coming weeks.
 
 Installation
 ------------
@@ -21,9 +24,14 @@ Installation
 Install as a gem:
 
 ```
-$ gem install resque-telework
+gilles@myapphost $ gem install resque-telework
 ```
 
+You may also add the following line in the Gemfile
+
+```
+gem 'resque-telework'
+```
 
 Configuration
 -------------
@@ -114,12 +122,32 @@ class TeleworkConfig < TeleworkConfigBase
   end
 
 end
-
-end
 ```
 
 Workflow
 --------
+
+After Telework is installed and the TeleworkConfig class implemented according to your environment, the code is deployed to all the relevant hosts. If you're using [Capistrano](https://github.com/capistrano/capistrano) it may look like:
+
+```
+gilles@myapphost $ cap deploy -S servers=myapphost,myhost0,myhost1,myhost2
+```
+
+The code is therefore deployed to the main app box (myapphost) and all the other 'worker' hosts. On each of these hosts, it is now necessary to register the new revision with Telework and start the Telework daemon. For instance on host0, this is done using the following commands:
+
+```
+gilles@myhost0 $ rake telework:register_revision
+gilles@myhost0 $ rake telework:start_daemon
+```
+
+The main Telework tab should now show the new box as alive. It is now possible to start new workers on these boxes using the new web-based UI.
+
+Going forward, when a new version of the app is deployed on host, it is necessary to register the new revision using the following command:
+
+```
+gilles@myhost0 $ rake telework:register_revision
+```
+Note that it is not necessary to stop/restart the daemon. Restarting the daemon should only happens when the Telework gem is updated.
 
 
 Todo

@@ -51,7 +51,7 @@ module Resque
         "#{key_prefix}:host:#{h}:last_seen"
       end
   
-      # Check
+      # Checks
       def check_redis
         res= true
         v0= Resque::Plugins::Telework::REDIS_INTERFACE_VERSION
@@ -62,7 +62,7 @@ module Resque
         end
         res
       end
-  
+        
       # Clients (hosts) side
     
       def i_am_alive( ttl=10 )

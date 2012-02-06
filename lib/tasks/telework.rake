@@ -8,8 +8,32 @@ namespace :telework do
     TeleworkRedis.new.register_revision(host, cfg)
   end
   
-  desc 'Start the Telework manager'
-  task :run_manager => :environment do
+  desc 'Start a Telework daemon on this machine and returns'
+  task :start_daemon => :environment do
+    host= find_configuration[:hostname]
+    klass= Resque::Plugins::Telework::Manager.new(host)
+    if klass.is_alive(host)
+      msg= "There is already a daemon running on #{host}"
+      klass.send_status( 'Error', msg)
+      klass.send_status( 'Error', "This daemon (PID #{Process.pid}) cannot be started and will terminare now")
+      return nil
+    end
+    logf= 'telework_daemon.log'
+    lpid= 'telework_daemon.pid'
+    pid = fork do
+      File.open(logf, 'w') do |lf|
+        $stdout.reopen(lf)
+        $stderr.reopen(lf)
+      end
+      Process.setsid
+      klass.start
+      File.delete(lpid)
+    end
+    open(lpid, 'w') { |f| f.write("#{pid}\n") } if pid
+  end
+  
+  desc 'Run the Telework daemon'
+  task :daemon => :environment do
     Resque::Plugins::Telework::Manager.new(find_configuration[:hostname]).start
   end
 
