@@ -44,6 +44,33 @@ namespace :telework do
     Resque::Plugins::Telework::Manager.new(get_config).start
   end
   
+  desc 'Register the local git installation'
+  task :create_local_config => :environment do
+    begin
+      rev_date= Time.parse(`git show --format=format:"%aD"`)
+    rescue
+      rev_date= nil
+    end
+    github_repo= "https://github.com/john/reputedly"
+    latest_revision= `git rev-parse HEAD`.chomp
+    cfg= { :hostname => find_hostname,
+           :revision => latest_revision,
+           :revision_small => latest_revision[0..6],
+           :revision_path => pwd,
+           :revision_link => "#{github_repo}/commit/#{latest_revision}",
+           :revision_branch => ( $1 if /\* (\S+)\s/.match(`git branch`) ),
+           :revision_date => rev_date,
+           :revision_deployement_date => Time.now,
+           :revision_info => `git log -1`,
+           :revision_log_path => "#{pwd}/log",
+           :daemon_pooling_interval => 2,
+           :daemon_log_path => pwd }  
+    # Create the config file
+    require 'json'
+    open("telework.conf", 'w') { |f| f.write(cfg.to_json) } 
+  end
+  
+  # Helper functions
   def get_config
     ch= { 'hostname' => find_hostname }
     # TELEWORK_CONFIG_FILE

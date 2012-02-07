@@ -150,7 +150,7 @@ module Resque
           alive << [h, "Alive"]  if is_alive(h)
           unless is_alive(h)
             ls= last_seen(h)
-            dead << [h, "Last seen #{fmt_date(ls)}"] if ls
+            dead << [h, "Last seen #{fmt_date(ls, true)}"] if ls
             unknown << [h, 'Unknown'] unless ls
           end
         end
@@ -219,10 +219,10 @@ module Resque
         Resque.redis.keys("#{key_prefix}:*").length
       end
       
-      def fmt_date( t, rel=true ) # This is not redis-specific and should be moved to another class!
+      def fmt_date( t, rel=false ) # This is not redis-specific and should be moved to another class!
         begin
           if rel
-            time_ago_in_words(Time.now-Time.parse(t).to_i)
+            "#{time_ago_in_words(Time.parse(t))} ago"
           else
             Time.parse(t).strftime("%a %b %e %R %Y")
           end

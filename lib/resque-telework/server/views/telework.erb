@@ -104,7 +104,7 @@ $(document).ready(function() {
       <tr>
 	     <td><a href= <%= "/resque/telework/revision/#{rev['revision']}" %> ><%= "#{rev['revision_small']}" %></a></td>
 	     <td><%= "#{rev['revision_branch']}" %></td>
-	     <td><%= "#{redis.fmt_date(rev['revision_deployement_date'])}" %></td>
+	     <td><%= "#{redis.fmt_date(rev['revision_deployement_date'], true)}" %></td>
       </tr>
       <%end%>
        </table>
