@@ -219,9 +219,13 @@ module Resque
         Resque.redis.keys("#{key_prefix}:*").length
       end
       
-      def fmt_date( t )
+      def fmt_date( t, rel=true ) # This is not redis-specific and should be moved to another class!
         begin
-          Time.parse(t).strftime("%a %b %e %R %Y")
+          if rel
+            time_ago_in_words(Time.now-Time.parse(t).to_i)
+          else
+            Time.parse(t).strftime("%a %b %e %R %Y")
+          end
         rescue
           "(unknown date)"
         end
@@ -237,5 +241,6 @@ module Resque
 end
 
 class TeleworkRedis
+  include ActionView::Helpers::DateHelper
   include Resque::Plugins::Telework::Redis
 end

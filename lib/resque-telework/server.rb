@@ -47,7 +47,7 @@ module Resque
           
           app.get "/#{appn.downcase}/Overview" do
             @status_messages= 100
-            @refresh= 5
+            @refresh= 10
             @scheduling= nil
             my_show appn.downcase
           end
