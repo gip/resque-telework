@@ -159,7 +159,7 @@ module Resque
         end
         
         def update_log_snapshot( id )
-          ls= @WORKERS[id]['log_snapshot']
+          ls= @WORKERS[id]['log_snapshot_period']
           return unless ls
           last= @WORKERS[id]['last_log_snapshot']
           last||= 0
