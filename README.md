@@ -43,76 +43,39 @@ gem 'resque-telework'
 Configuration
 -------------
 
-Telework requires a configuration class to be added to your app. An example class (show below and in the `config/example/telework.rb`) is included for convenience. This file should be modified to reflect your own environment. It is necessary to make sure the file is loaded at startup by Rails as Telework will instantiate the class upon startup. The simplest way to achieve this is to copy the modified `telework_config.rb` file into your app `config/initializers` directory.
+Some external configuration is necessary when working with Telework as the gem needs a way to retrieve information about the code revision being deployed (git hash or SVN revision number), its path, the location for log files and so on.. When Telework rake tasks start (`telework:register_revision`, `telework:start_daemon` or `telework:daemon`), it will try to open the file in the environment variable `TELEWORK_CONFIG_FILE`. If this variable doesn't exist it will try to open the `telework.conf` file in the local directory.
 
-The `TeleworkConfig` class allows for Telework to retrieve information regarding versioning of your source code, hostname and related data. As the example class has been developed for git and github, users of these revision control systems will potentially have to update a single line in the example file. Subversion users will have to do more work as the `TeleworkConfig` class needs to be able to retrieve revision and host information.
-
-The `TeleworkConfig` class must implement the methods `config` and `host_config` as show below.
+The configuration file should contains information about the revision being deployed in the JSON format. A simple way of achieving this is to add a task in the deployment script. For instance, if you are using [Capistrano](https://github.com/capistrano/capistrano), the new task could look like this:
 
 ```ruby
-# Configuration class for the resque-telework plugin
+namespace :deploy do
 
-# This is an example file that works with git and github
-# You may copy this file to your Rails config/initializers directory
-#   and make changes to the TeleworkConfig class to reflect your environment
+    # ... other tasks here
 
-# Note that this implementation is using git commands under the hood
-# Another way would be to have the deployement script generate a configuration
-#   file (in JSON for instance) and have the TeleworkConfig class load it
-
-
-# Example Teleconfig class, change it to reflect you environment
-# This class should have two methods: config and host_config
-#
-class TeleworkConfig
-
-  def git_repo
-    "https://github.com/john/reputedly"       # <<< Change this line to point to your own github repo
-  end
-  
-  def log_path
-    "#{Rails.root.to_s}/log"                  # <<< Change this to set a different path to worker log files
-  end
-  
-  def daemon_log_path
-    "#{Rails.root.to_s}/daemon_log"           # <<< Change this to set a path to daemon log files
-  end
-  
-  def daemon_pooling_interval
-    2                                         # <<< Change this to set a new daemon pooling interval (in seconds)
-  end  
-  
-  # Config method, works well for git
-  def config
-    revision= `git rev-parse HEAD`.chomp    
-    { :revision => revision,
-      :revision_small => revision[0..6],
-      :revision_path => Rails.root.to_s,
-      :revision_link => "#{git_repo}/commit/#{revision}",
-      :revision_branch => ( $1 if /\* (\S+)\s/.match(`git branch`) ),
-      :revision_date => Time.parse(`git show --format=format:"%aD" | head -n1`),
-      :revision_deployement_date => Time.now,
-      :revision_info => `git log -1` }.merge(host_config)
-  end
-  
-  def host_config
-    { :hostname => find_hostname,
-      :daemon_pooling_interval => daemon_pooling_interval,
-      :daemon_log_path => daemon_log_path }
-  end
-  
-  def find_hostname
-    # To find the hostname, we successively looks into
-    #  1) the environement variable TELEWORK_HOSTNAME
-    #  2) we get it through a Socket call
-    host= ENV['TELEWORK_HOSTNAME']
-    unless host
-      require 'socket'
-      host= Socket::gethostname()
-    end
-    raise "Could not find hostname.. exiting" unless host
-    host
-  end
+    # Example of task generating config information for Telework
+	task :telework_register do
+	  begin
+	    rev_date= Time.now # Time.parse(`git show --format=format:"%aD"`)
+	  rescue
+	    rev_date= nil
+	  end
+	  github_repo= "https://github.com/john/reputedly"
+	  cfg= { :revision => latest_revision,
+	         :revision_small => latest_revision[0..6],
+	         :revision_path => "#{current_release}",
+	         :revision_link => "#{github_repo}/commit/#{latest_revision}",
+	         :revision_branch => branch,
+	         :revision_date => rev_date,
+	         :revision_deployement_date => Time.now,
+	         :revision_info => `git log -1`,
+	         :revision_log_path => "#{current_release}/log",
+	         :daemon_pooling_interval => 2,
+	         :daemon_log_path => deploy_to }
+	  require 'json' 
+	  put cfg.to_json, "#{deploy_to}/current/telework.conf"
+	  run "cd #{deploy_to}/current && bundle exec rake telework:register_revision --trace"
+	end
+	after "deploy:more_symlinks", "deploy:telework_register"
 
 end
 ```

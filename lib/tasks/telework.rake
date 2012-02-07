@@ -45,9 +45,14 @@ namespace :telework do
   end
   
   def get_config
-    # TODO: look into TELEWORK_CONFIG_FILE
     ch= { 'hostname' => find_hostname }
-    ActiveSupport::JSON.decode(open("telework_config.log", "r").read).merge(ch)
+    # TELEWORK_CONFIG_FILE
+    fn= ENV['TELEWORK_CONFIG_FILE']
+    # Local config file
+    fn||= "telework.conf" if File.exist?("telework.conf")
+    fn||= "telework_config.log" if File.exist?("telework_config.log")  # Legacy, this will be removed
+    raise "Could not find Telework configuration file.. exiting" unless fn
+    ActiveSupport::JSON.decode(open(fn, "r").read).merge(ch)
   end
   
   def find_hostname
