@@ -7,8 +7,8 @@ module Resque
         
         def initialize(cfg)
           @RUN_DAEMON= true
-          @HOST= cfg[:hostname]
-          @SLEEP= cfg[:daemon_pooling_interval]
+          @HOST= cfg['hostname']
+          @SLEEP= cfg['daemon_pooling_interval']
           @WORKERS= {}
           @STOPPED= []
         end
@@ -48,6 +48,7 @@ module Resque
           send_status( 'Error', "Exit called in #{@HOST} daemon but workers are still running") unless @WORKERS.empty?
         rescue Exception => e    # Other exceptions
           send_status( 'Error', "Exception #{e.message}")
+          puts "Backtrace: #{e.backtrace}"
           send_status( 'Error', "Exception should not be raised in the #{@HOST} daemon, please submit a bug report")
         end
         

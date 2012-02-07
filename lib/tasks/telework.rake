@@ -3,15 +3,15 @@ namespace :telework do
   desc 'Register a new revision into Telework'
   task :register_revision => :environment do     
     cfg= get_config
-    host= cfg[:hostname]
-    cfg.delete(:hostname)
+    host= cfg['hostname']
+    cfg.delete('hostname')
     TeleworkRedis.new.register_revision(host, cfg)
   end
   
   desc 'Start a Telework daemon on this machine and returns'
   task :start_daemon => :environment do
     cfg= get_config
-    host= cfg[:hostname]
+    host= cfg['hostname']
     daemon= Resque::Plugins::Telework::Manager.new(cfg)
     if daemon.is_alive(host)
       msg= "There is already a daemon running on #{host}"
@@ -19,7 +19,7 @@ namespace :telework do
       daemon.send_status( 'Error', "This daemon (PID #{Process.pid}) cannot be started and will terminare now")
       return nil
     end
-    logp= cfg[:daemon_log_path]
+    logp= cfg['daemon_log_path']
     logp||= "."
     logf= "#{logp}/telework_daemon.log"
     lpid= "#{logp}/telework_daemon.pid"
@@ -46,7 +46,7 @@ namespace :telework do
   
   def get_config
     # TODO: look into TELEWORK_CONFIG_FILE
-    ch= { :hostname => find_hostname }
+    ch= { 'hostname' => find_hostname }
     ActiveSupport::JSON.decode(open("telework_config.log", "r").read).merge(ch)
   end
   
