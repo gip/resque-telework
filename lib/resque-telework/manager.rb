@@ -97,8 +97,8 @@ module Resque
           pid= spawn( env, exec, opt) # Start it!
           info= { 'pid' => pid, 'status' => 'running', 'environment' => env, 'options' => opt, 'revision_info' => rev_info }
           # Log snapshot
-          info['log_snapshot']= cmd['log_snapshot'] if cmd['log_snapshot']
-          info['log_snapshort_size']= cmd['log_snapshot_size'] if cmd['log_snapshot']
+          info['log_snapshot_period']= cmd['log_snapshot_period'] if cmd['log_snapshot_period']
+          info['log_snapshort_lines']= cmd['log_snapshot_lines'] if cmd['log_snapshot_lines']
           @WORKERS[id]= info
           workers_add( @HOST, id, info )
           send_status( 'Info', "Starting worker #{id} (PID #{pid})" )
@@ -164,7 +164,7 @@ module Resque
           last||= 0
           now= Time.now.to_i
           if now >= last+ls
-            size= @WORKERS[id]['log_snapshot_size']
+            size= @WORKERS[id]['log_snapshot_lines']
             size||= 20
             # Getting the logs
             logerr= get_tail( @WORKERS[id]['options'][:err], size )

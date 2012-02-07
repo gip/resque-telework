@@ -120,27 +120,27 @@ end
 Workflow
 --------
 
-After Telework is installed and the TeleworkConfig class implemented according to your environment, the code is deployed to all the relevant hosts. If you're using [Capistrano](https://github.com/capistrano/capistrano) it may look like:
+After Telework is installed and the `TeleworkConfig` class modified to match your environment, the code may be deployed to all the relevant hosts. If you're using [Capistrano](https://github.com/capistrano/capistrano) it may look like:
 
 ```
 gilles@myapphost $ cap deploy -S servers=myapphost,myworkhost0,myworkhost1,myworkhost2
 ```
 
-The code is therefore deployed to the main app box (`myapphost`) and all the other 'worker' hosts. On each of these hosts, it is now necessary to register the new revision with Telework and start the Telework daemon. For instance on host0, this is done using the following commands:
+The code above deploys the code to the main app box (`myapphost`) and all the other 'worker' hosts. On each of these hosts, it is now necessary to register the new revision with Telework and start the Telework daemon. For instance on host0, this is done using the following commands:
 
 ```
 gilles@myworkhost0 $ rake telework:register_revision
 gilles@myworkhost0 $ rake telework:start_daemon
 ```
 
-The main Telework tab should now show the new box as alive. It is now possible to start new workers on these boxes using the new web-based UI, saving a lot of ssh/screen commands.
+The main Telework tab should now show the new box as alive. It is now possible to seamlessly start new workers on these boxes using the new web-based UI.
 
 Going forward, when a new version of the app is deployed on host, it is necessary to register the new revision using the following command:
 
 ```
 gilles@myworkhost0 $ rake telework:register_revision
 ```
-Note that it is not necessary to stop and restart the daemon. Restarting the daemon should only happens when the Telework gem is updated.
+Note that it is not necessary to stop and restart the daemon. Restarting the daemon is only required when the Telework gem is updated.
 
 Known Issues
 ------------
@@ -148,7 +148,6 @@ Known Issues
 For version 0.0.1:
 
 * The daemon crashes if any of the log directories do not exist
-
 
 Bugs
 ----
@@ -161,7 +160,7 @@ Todo
 The following features are are being developed and should be available shortly:
 
 * Improved window layout
-* Seamless update of workers to newer revision
+* Seamless update of workers to newer revision (stop and then restart on new revision)
 * Worker history (there is currently no history for terminated workers)
 
 The following features are planned for future releases:

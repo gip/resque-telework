@@ -1,9 +1,8 @@
 namespace :telework do
 
   desc 'Register a new revision into Telework'
-  task :register_revision => :environment do 
-    check_configuration    
-    cfg= TeleworkConfig.new.config
+  task :register_revision => :environment do     
+    cfg= get_config
     host= cfg[:hostname]
     cfg.delete(:hostname)
     TeleworkRedis.new.register_revision(host, cfg)
@@ -11,8 +10,7 @@ namespace :telework do
   
   desc 'Start a Telework daemon on this machine and returns'
   task :start_daemon => :environment do
-    check_configuration
-    cfg= TeleworkConfig.new.host_config
+    cfg= get_config
     host= cfg[:hostname]
     daemon= Resque::Plugins::Telework::Manager.new(cfg)
     if daemon.is_alive(host)
@@ -43,17 +41,26 @@ namespace :telework do
   
   desc 'Run the Telework daemon'
   task :daemon => :environment do
-    check_configuration
-    Resque::Plugins::Telework::Manager.new(TeleworkConfig.new.host_config).start
+    Resque::Plugins::Telework::Manager.new(get_config).start
   end
-
-  def check_configuration
-    klass = Module.const_get('TeleworkConfig')
-    unless klass.is_a?(Class)
-      msg= "Telework: Error: It is likely that the TeleworkConfig class couldn't be found (it should have been added to your app)"
-      puts msg
-      raise msg
+  
+  def get_config
+    # TODO: look into TELEWORK_CONFIG_FILE
+    ch= { :hostname => find_hostname }
+    ActiveSupport::JSON.decode(open("telework_config.log", "r").read).merge(ch)
+  end
+  
+  def find_hostname
+    # To find the hostname, we successively looks into
+    #  1) the environement variable TELEWORK_HOSTNAME
+    #  2) we get it through a Socket call
+    host= ENV['TELEWORK_HOSTNAME']
+    unless host
+      require 'socket'
+      host= Socket::gethostname()
     end
+    raise "Could not find hostname.. exiting" unless host
+    host
   end
   
 end

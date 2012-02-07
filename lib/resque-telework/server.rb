@@ -128,7 +128,8 @@ module Resque
                                       'worker_id' => redis.unique_id.to_s, 'worker_count' => @count,
                                       'rails_env' => @env, 'worker_queue' => @q,
                                       'exec' => "bundle exec rake resque:work --trace",
-                                      'log_snapshot' => 30 } )
+                                      'log_snapshot_period' => 30,        # TODO: move to config page 
+                                      'log_snapshot_lines' => 40 } )      # TODO: move to config page
             redirect "/resque/#{appn.downcase}"
           end
           
