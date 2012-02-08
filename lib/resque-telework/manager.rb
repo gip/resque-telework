@@ -87,12 +87,13 @@ module Resque
           log_path||= "."
           rev= rev_info['revision']
           id= cmd['worker_id']
+          queuel= cmd['worker_queue'].gsub(/,/, '_').gsub(/\*/, '(star)')
           # Starting the job
           env= { "QUEUE"=> cmd['worker_queue'] }
           env["RAILS_ENV"]= cmd['rails_env'] if "(default)" != cmd['rails_env']
           opt= { :in => "/dev/null", 
-                 :out => "#{log_path}/telework_#{id}_stdout.log", 
-                 :err => "#{log_path}/telework_#{id}_stderr.log", 
+                 :out => "#{log_path}/telework_#{id}_#{queuel}_stdout.log", 
+                 :err => "#{log_path}/telework_#{id}_#{queuel}_stderr.log", 
                  :chdir => path }
           exec= cmd['exec']
           pid= spawn( env, exec, opt) # Start it!

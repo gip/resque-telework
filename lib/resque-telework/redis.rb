@@ -80,7 +80,7 @@ module Resque
         Resque.redis.ltrim(k, 0, lim-1)
         rem= []
         Resque.redis.lrange(k, 0, lim-1).each do |s|
-          if ActiveSupport::JSON.decode(s)['revision']==rev[:revision]
+          if ActiveSupport::JSON.decode(s)['revision']==rev['revision']
             rem << s
             puts "Telework: Info: Revision #{rev['revision']} was already registered for this host, so the previous one will be unregistered" 
           end

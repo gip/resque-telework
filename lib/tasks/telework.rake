@@ -34,7 +34,6 @@ namespace :telework do
       daemon.start        # Start the daemon
       File.delete(lpid)   # Delete the pid file
     end
-    
     open(lpid, 'w') { |f| f.write("#{pid}\n") } if pid  # Create the pid file
     
   end
@@ -45,7 +44,7 @@ namespace :telework do
   end
   
   desc 'Register the local git installation'
-  task :create_local_config => :environment do
+  task :local_config_from_git => :environment do
     begin
       rev_date= Time.parse(`git show --format=format:"%aD"`)
     rescue
