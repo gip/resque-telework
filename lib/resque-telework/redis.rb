@@ -232,6 +232,7 @@ module Resque
       end
       
       def text_to_html(s)
+        return "" unless s
         ss= s.gsub(/\n/, '<br>')
       end
         
