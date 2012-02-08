@@ -21,4 +21,5 @@ Gem::Specification.new do |s|
   complex systems that may include several hosts, different queue(s) and an evolving source code that is deployed several times a day. 
   Beyond starting and stopping workers on remote hosts, the plugin makes it easy to switch between code revisions, gives a partial view of 
   each worker's log (stdout and stderr) and maintains a status of each workers.
+description
 end
