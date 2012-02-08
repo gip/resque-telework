@@ -115,7 +115,7 @@ For version 0.0.1:
 Bugs
 ----
 
-Please report bugs on [github](https://github.com/gip/resque-telework/issues) or directly to [gilles.github@gmail.com](gilles.github@gmail.com)
+Please report bugs on [github](https://github.com/gip/resque-telework/issues) or directly to [gip.github@gmail.com](gip.github@gmail.com)
 
 Todo
 ----
@@ -123,11 +123,12 @@ Todo
 The following features are are being developed and should be available shortly:
 
 * Improved window layout
-* Seamless update of workers to newer revision (stop and then restart on new revision)
 * Worker history (there is currently no history for terminated workers)
 
 The following features are planned for future releases:
 
+* Seamless update of workers to newer revision (stop and then restart on new revision)
+* Automated stopping/starting of workers at given interval (to make sure workers are not stuck in bad states)
 * Light-weight daemon
 * Starting multiple workers at once
 * Worker statistics
