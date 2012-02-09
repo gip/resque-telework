@@ -48,34 +48,49 @@ Some external configuration is necessary when working with Telework as the gem n
 The configuration file should contains information about the revision being deployed in the JSON format. A simple way of achieving this is to add a task in the deployment script. For instance, if you are using [Capistrano](https://github.com/capistrano/capistrano), the new task could look like this:
 
 ```ruby
+# ...
+
 namespace :deploy do
 
-    # ... other tasks here
+    # ... other deployment tasks here
 
-    # Example of task generating config information for Telework
-	task :telework_register do
-	  begin
-	    rev_date= Time.now # Time.parse(`git show --format=format:"%aD"`)
-	  rescue
-	    rev_date= nil
-	  end
-	  github_repo= "https://github.com/john/reputedly"
-	  cfg= { :revision => latest_revision,
-	         :revision_small => latest_revision[0..6],
-	         :revision_path => "#{current_release}",
-	         :revision_link => "#{github_repo}/commit/#{latest_revision}",
-	         :revision_branch => branch,
-	         :revision_date => rev_date,
-	         :revision_deployement_date => Time.now,
-	         :revision_info => `git log -1`,
-	         :revision_log_path => "#{current_release}/log",
-	         :daemon_pooling_interval => 2,
-	         :daemon_log_path => deploy_to }
-	  require 'json' 
-	  put cfg.to_json, "#{deploy_to}/current/telework.conf"
-	  run "cd #{deploy_to}/current && bundle exec rake telework:register_revision --trace"
-	end
-	after "deploy:more_symlinks", "deploy:telework_register"
+    # Telework registration task (example for github)
+    task :telework_register do
+      repo= 'john/reputedly'                                                         # <<< Change your Github repo name here 
+      github_repo= "https://github.com/#{repo}"
+      log_path= "#{deploy_to}/shared/worker_log"                                     # <<< Change paths to the log files here
+      run "mkdir -p #{log_path}" # Making sure the log directory exists
+      begin 
+        require 'octokit'  # Gem to access the Github API
+        client = Octokit::Client.new(:login => ACCOUNT, :password => PASSWORD )      # <<< Put your Github credentials here
+        commit= client.commit(repo, latest_revision)
+        rev_date= commit['commit']['committer']['date']
+        rev_name= commit['commit']['committer']['name']
+        rev_info= commit['commit']['message']
+      rescue                                                                         # No big deal if there is a problem accessing Github, 
+                                                                                     #   the info fields will just remain empty
+      end
+      cfg= { :revision => latest_revision,                                           # latest_revison, current_release, branch,...
+             :revision_small => latest_revision[0..6],                               #   are defined by Capistrano
+             :revision_path => "#{current_release}",
+             :revision_link => "#{github_repo}/commit/#{latest_revision}",
+             :revision_branch => branch,
+             :revision_date => rev_date,
+             :revision_committer => rev_name,
+             :revision_deployement_date => Time.now,
+             :revision_info => rev_info,
+             :revision_log_path => log_path,
+             :daemon_pooling_interval => 2,
+             :daemon_log_path => deploy_to }
+      
+      # Create the config file
+      require 'json' 
+      put cfg.to_json, "#{deploy_to}/current/telework.conf"
+      
+      # Start the registration rake task
+      run "cd #{deploy_to}/current && bundle exec rake telework:register_revision --trace"
+    end
+    after "deploy:more_symlinks", "deploy:telework_register"                          # <<< Schedule the task at the end of deployment
 
 end
 ```
