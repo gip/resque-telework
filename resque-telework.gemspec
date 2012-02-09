@@ -12,6 +12,7 @@ Gem::Specification.new do |s|
   s.summary     = %q{resque-telework: A Resque plugin aimed at controlling Resque workers from the web UI }
 
   s.add_runtime_dependency 'resque', '~> 1.19.0'
+  s.add_runtime_dependency 'sys-cpu', '~> 0.7.0'
   s.extra_rdoc_files = ["README.md", "MIT-LICENSE"]
 
   s.files         = `git ls-files`.split("\n")

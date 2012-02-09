@@ -65,12 +65,13 @@ module Resque
         
       # Clients (hosts) side
     
-      def i_am_alive( ttl=10 )
+      def i_am_alive( info= {}, ttl=10 )
         h= @HOST
         t= Time.now
+        info= info.merge( { 'date' => t } )
         k= alive_key(h)
         hosts_add(h)
-        Resque.redis.set(k, t)
+        Resque.redis.set(k, info.to_json )
         Resque.redis.expire(k, ttl)
         Resque.redis.set(last_seen_key(h), t)
       end
@@ -147,11 +148,12 @@ module Resque
         dead= []
         unknown= []
         hosts.each do |h|
-          alive << [h, "Alive"]  if is_alive(h)
-          unless is_alive(h)
+          life= is_alive(h)
+          alive << [h, "Alive", life]  if life
+          unless life
             ls= last_seen(h)
-            dead << [h, "Last seen #{fmt_date(ls, true)}"] if ls
-            unknown << [h, 'Unknown'] unless ls
+            dead << [h, "Last seen #{fmt_date(ls, true)}", {} ] if ls
+            unknown << [h, 'Unknown', {} ] unless ls
           end
         end
         alive+dead+unknown
@@ -208,7 +210,13 @@ module Resque
       end
       
       def is_alive( h )
-        Resque.redis.exists(alive_key(h))
+        v= Resque.redis.get(alive_key(h))
+        return nil unless v
+        begin
+          ActiveSupport::JSON.decode(v)
+        rescue
+          {}
+        end
       end
       
       def last_seen( h )

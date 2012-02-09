@@ -81,9 +81,13 @@ $(document).ready(function() {
       <th>Revisions</th>
       <th>Workers</th>
     </tr>
-    <% for host, status in redis.workers_state %>
+    <% for host, status, info in redis.workers_state %>
       <tr>
-      <td><%= host%></td>
+      <td><%= host%>
+	      <% if 'Alive'==status && info['cpu_load_1mins'] %>
+	         <br><%= "(%.2f%% cpu)" % info['cpu_load_1mins'] %>
+	      <% end %>
+	  </td>
       <% if 'Alive'==status %>
         <td> <table><tr><td>Alive</td></tr>
 	                <tr><td>

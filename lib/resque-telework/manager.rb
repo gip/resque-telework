@@ -24,10 +24,11 @@ module Resque
           if is_alive(@HOST)  # Only one deamon can be run on a given host at the moment (this may change)
             send_status( 'Error', "There is already a daemon running on #{@HOST}")
             send_status( 'Error', "This daemon (PID #{Process.pid}) cannot be started and will terminare now")
+            exit
           end
           loop do                                # The main loop
             while @RUN_DAEMON do                 # If there is no request to stop
-              i_am_alive                         # Notify the system that the daemon is alive
+              i_am_alive(health_info)            # Notify the system that the daemon is alive
               check_processes                    # Check the status of the child processes (to catch zombies)
               while cmd= cmds_pop( @HOST ) do    # Pop a command in the command queue
                 do_command(cmd)                  # Execute it
@@ -50,6 +51,18 @@ module Resque
           send_status( 'Error', "Exception #{e.message}")
           puts "Backtrace: #{e.backtrace}"
           send_status( 'Error', "Exception should not be raised in the #{@HOST} daemon, please submit a bug report")
+        end
+        
+        # Health info
+        def health_info
+          require "sys/cpu"
+          load= Sys::CPU.load_avg
+          puts load
+          { :cpu_load_1mins => load[0],
+            :cpu_load_5mins => load[1],
+            :cpu_load_15mins => load[2] }
+        rescue
+          {}
         end
         
         # Add a status message on the status queue
