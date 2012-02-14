@@ -57,7 +57,6 @@ module Resque
         def health_info
           require "sys/cpu"
           load= Sys::CPU.load_avg
-          puts load
           { :cpu_load_1mins => load[0],
             :cpu_load_5mins => load[1],
             :cpu_load_15mins => load[2] }
