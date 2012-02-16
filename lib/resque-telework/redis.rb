@@ -76,14 +76,19 @@ module Resque
         Resque.redis.set(last_seen_key(h), t)
       end
       
-      def register_revision( h, rev, lim=30 )
+      def register_revision( h, rev, lim=10 )
         k= revisions_key(h)
         Resque.redis.ltrim(k, 0, lim-1)
         rem= []
         Resque.redis.lrange(k, 0, lim-1).each do |s|
-          if ActiveSupport::JSON.decode(s)['revision']==rev['revision']
+          info= ActiveSupport::JSON.decode(s)
+          if info['revision']==rev['revision']
             rem << s
             puts "Telework: Info: Revision #{rev['revision']} was already registered for this host, so the previous one will be unregistered" 
+          end
+          if info['revision_path']==rev['revision_path']
+            rem << s
+            puts "Telework: Info: Path for revision #{rev['revision']} was already registedred by another revision which will therefore by removed"
           end
         end
         rem.each { |r| Resque.redis.lrem(k, 0, r) }
