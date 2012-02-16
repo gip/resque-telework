@@ -143,7 +143,7 @@ module Resque
         end
                 
         def check_processes
-          workers_delall( @HOST )
+          #workers_delall( @HOST )
           @WORKERS.keys.each do |id|
             remove= false
             unexpected_death= false
@@ -155,6 +155,7 @@ module Resque
               remove= true
             end
             if remove
+              workers_rem( @HOST, id )
               if unexpected_death
                 send_status( 'Error', "Worker #{id} (PID #{@WORKERS[id]['pid']}) has unexpectedly ended" )
               else
@@ -166,8 +167,7 @@ module Resque
             else
               update_log_snapshot(id)
               workers_add( @HOST, id, @WORKERS[id] )
-            end
-                        
+            end            
           end
         end
         

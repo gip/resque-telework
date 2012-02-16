@@ -118,7 +118,8 @@ module Resque
       end
       
       def workers_rem( h , id )
-        Resque.redis.hdel(h, id)
+        k= workers_key(h)
+        Resque.redis.hdel(k, id)
       end
       
       def cmds_pop( h )
