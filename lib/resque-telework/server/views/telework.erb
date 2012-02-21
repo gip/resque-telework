@@ -85,7 +85,7 @@ $(document).ready(function() {
       <tr>
       <td><%= host%>
 	      <% if 'Alive'==status && info['cpu_load_1mins'] %>
-	         <br><%= "(%.2f%% cpu)" % info['cpu_load_1mins'] %>
+	         <br><%= "(%.2f%% cpu)" % (100*info['cpu_load_1mins']) %>
 	      <% end %>
 	  </td>
       <% if 'Alive'==status %>
