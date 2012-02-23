@@ -116,6 +116,15 @@ module Resque
             my_show 'stopit'
           end
           
+          app.post "/#{appn.downcase}_add_note" do
+            puts "note"
+            @user= params[:user]
+            @date= Time.now
+            @note= params[:note]
+            redis.notes_push({ 'user'=> @user, 'date'=> @date, 'note' => @note })
+            redirect "/resque/#{appn.downcase}"
+          end
+          
           app.post "/#{appn.downcase}_do_start" do
             @host= params[:h]
             @queue= params[:q]

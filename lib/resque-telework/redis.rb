@@ -50,6 +50,10 @@ module Resque
       def last_seen_key( h ) # String, no TTL
         "#{key_prefix}:host:#{h}:last_seen"
       end
+
+      def notes_key # List
+        "#{key_prefix}:notes"
+      end
   
       # Checks
       def check_redis
@@ -187,6 +191,14 @@ module Resque
       
       def cmds_push( h, info )
         Resque.redis.lpush(cmds_key(h), info.to_json)
+      end
+
+      def notes_push( info )
+        Resque.redis.lpush(notes_key, info.to_json)
+      end
+      
+      def notes_pop ( lim= 100 )
+        Resque.redis.lrange(notes_key, 0, lim-1).collect { |s| ActiveSupport::JSON.decode(s) }
       end
 
       def acks_pop( h )
