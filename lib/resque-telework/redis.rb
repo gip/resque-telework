@@ -200,6 +200,11 @@ module Resque
       def notes_pop ( lim= 100 )
         Resque.redis.lrange(notes_key, 0, lim-1).collect { |s| ActiveSupport::JSON.decode(s) }
       end
+      
+      def notes_del( id )
+        info= Resque.redis.lindex(notes_key, id)
+        Resque.redis.lrem(notes_key, 0, info)
+      end
 
       def acks_pop( h )
         Resque.redis.rpop(acks_key(h))

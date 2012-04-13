@@ -117,13 +117,18 @@ module Resque
           end
           
           app.post "/#{appn.downcase}_add_note" do
-            puts "note"
             @user= params[:user]
             @date= Time.now
             @note= params[:note]
             redis.notes_push({ 'user'=> @user, 'date'=> @date, 'note' => @note })
             redirect "/resque/#{appn.downcase}"
           end
+          
+          app.post "/#{appn.downcase}_del_note/:note" do
+            @note_id= params[:note]
+            redis.notes_del(@note_id)
+            redirect "/resque/#{appn.downcase}"
+          end          
           
           app.post "/#{appn.downcase}_do_start" do
             @host= params[:h]

@@ -151,4 +151,4 @@ The following features are planned for future releases:
 Thanks
 ------
 
-I would like to thank [RG Labs](http://www.rglabsinc.com/) for the awesome environment and support to open-source development 
+I would like to thank [Entelo](http://www.entelo.com/) for the awesome environment and support to open-source development 

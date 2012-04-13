@@ -47,12 +47,16 @@ $(document).ready(function() {
 		<th>User</th>
 		<th>Date</th>
 		<th>Note</th>
+        <th>Action</th>
 	</tr>
-    <% for note in notes %>
+    <% for note,id in notes.each_with_index %>
     <tr>
 	    <td><%= note['user'] %></td>
 	    <td><%= "#{redis.fmt_date(note['date'], true)}" %></td>
 	    <td><%= note['note'] %></td>
+        <td>
+           <form id="deln" name="deln" method="post" action="/resque/telework_del_note/<%= id %>" ><input type="submit" value= "Delete" /></form>
+        </td>
 	</tr>
     <% end %>
 </table>
