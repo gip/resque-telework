@@ -77,7 +77,7 @@ $(document).ready(function() {
                                  "onchange=\"javascript: hostlist(this.options[this.selectedIndex].value);\"") %>
       </span>
       <span class="queue_filter">
-        Queue: <%= generic_filter("queue_filter", "q", ["(other)"] + Resque.redis.smembers('queues') << "*",
+        Queue: <%= generic_filter("queue_filter", "q", ["(other)"] + Resque.redis.smembers('queues').sort << "*",
                                   "onchange=\"javascript: queuelist(this.options[this.selectedIndex].value);\"") %>
         Queue: <input id="queue_text" type="text" name="qmanual" onkeyup="javascript: queuetext(this.value);" />
       </span>
