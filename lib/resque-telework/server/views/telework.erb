@@ -115,7 +115,7 @@ $(document).ready(function() {
 	      <% end %>
 	  </td>
       <% if 'Alive'==status %>
-        <td> <table><tr><td>Alive</td></tr>
+        <td> <table><tr><td><%= "Alive (v#{info['version']})" %></td></tr>
 	                <tr><td>
 	                	<form id="stopd" name="stopd" method="post" action="/resque/telework_stopitd/<%= host %>" ><input type="submit" value= <%="\"Stop\""%> /></form>
 	                </td></tr>

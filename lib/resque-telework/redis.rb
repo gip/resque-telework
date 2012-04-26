@@ -72,7 +72,7 @@ module Resque
       def i_am_alive( info= {}, ttl=10 )
         h= @HOST
         t= Time.now
-        info= info.merge( { 'date' => t } )
+        info= info.merge( { 'date' => t, 'version' => Resque::Plugins::Telework::Version } )
         k= alive_key(h)
         hosts_add(h)
         Resque.redis.set(k, info.to_json )
