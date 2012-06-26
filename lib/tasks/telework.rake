@@ -55,6 +55,7 @@ namespace :telework do
     cfg= { :hostname => find_hostname,
            :revision => latest_revision,
            :revision_small => latest_revision[0..6],
+           :revision_type => 'Rails:Resque',
            :revision_path => pwd,
            :revision_link => "#{github_repo}/commit/#{latest_revision}",
            :revision_branch => ( $1 if /\* (\S+)\s/.match(`git branch`) ),

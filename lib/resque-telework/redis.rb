@@ -80,7 +80,7 @@ module Resque
         Resque.redis.set(last_seen_key(h), t)
       end
       
-      def register_revision( h, rev, lim=10 )
+      def register_revision( h, rev, lim=9 )
         k= revisions_key(h)
         Resque.redis.ltrim(k, 0, lim-1)
         rem= []
