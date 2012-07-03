@@ -12,7 +12,7 @@ function hostlist(index) {
 	  <%= "case'#{host}':" %>
 	  <% i= 0 %>
 	  <% for rev in redis.revisions(host) %>
-	    <%= "document.startform.rev_filter.options[#{i}]= new Option('#{rev['revision_small']} from #{redis.fmt_date(rev['revision_date'])}', '#{rev['revision']}' );" %>
+	    <%= "document.startform.rev_filter.options[#{i}]= new Option('#{rev['revision_small']} from #{redis.fmt_date(rev['revision_date'])}', '#{rev['revision']} #{rev['revision_small']}' );" %>
 	  <% i+= 1 %>
 	  <% end %> break;
 	<% end %>
@@ -29,6 +29,14 @@ function queuetext(val) {
 	if(val!="") {
 		document.startform.queue_filter.selectedIndex= 0;
 	}
+};
+function action(val) {
+    if(val == "Select" ) { return true; }
+	var form = document.createElement("form");
+    form.setAttribute("method", "post");
+    form.setAttribute("action", "/resque/telework"+val);
+    document.body.appendChild(form);
+    form.submit();
 };
 $(document).ready(function() {
 	document.startform.queue_filter.selectedIndex= 1;
@@ -71,7 +79,7 @@ $(document).ready(function() {
 
 <div class="clearfix">
   <div class="control_panel sub_header">
-    <form id="startform" name="startform" method="post" action="/resque/telework_do_start" >
+    <form id="startform" name="startform" method="post" action="/resque/telework/start_task" >
       <span class="host_filter">
         Host: <%= generic_filter("host_filter", "h", redis.hosts, 
                                  "onchange=\"javascript: hostlist(this.options[this.selectedIndex].value);\"") %>
@@ -99,7 +107,7 @@ $(document).ready(function() {
 <% end %>
 
 
-<h1>Hosts, Revisions and Workers</h1>
+<h1>Hosts, Revisions, Tasks and Workers</h1>
 <table>
     <tr>
       <th>Host</th>
@@ -139,23 +147,30 @@ $(document).ready(function() {
       <%end%>
        </table>
       </td>
-      <td><%= redis.workers(host).length%> worker(s) currently running
+      <td><%= redis.tasks(host).length%> task(s)
 	  <table><tr>
-		</tr><th>Worker</th>
+		</tr><th>Task</th>
+		     <th>Status</th>
 		     <th>Queue(s)</th>
 		     <th>Revision</th>
 		     <th>Action</th>
 		<tr>
-	  <% for id, info in redis.workers(host) %>
-        <td>
-	    <%= "<a href=\"/resque/telework/worker/#{host}/#{id}\">#{id}</a>" %>
-	    </td><td><%= "#{info['environment']['QUEUE']}" %>
-		</td><td>
-        <a href= <%= "/resque/telework/revision/#{info['revision_info']['revision']}" %> ><%= "#{info['revision_info']['revision_small']}" %></a>
+	  <% for id, info in redis.tasks(host) %>
+	     <% running= info['worker_status']=='Running' %>
+             <td><%= "<a href=\"/resque/telework/worker/#{host}/#{id}\">#{id}</a>" %>
+	    </td><td><%= "#{info['worker_status']}" %>
+	    </td><td><%= "#{info['queue']}" %>
+		</td><td><a href= <%= "/resque/telework/revision/#{info['revision']}" %> ><%= "#{info['revision_small']}" %></a>
         </td><td>
-	    <form id="stop<%=id%>" name="stop<%=id%>" method="post" action="/resque/telework_stopit/<%=id%>" ><input type="submit" value= <%="\"Stop\""%> /></form>
+	        <select id="action" name="a" onchange="javascript: action(this.options[this.selectedIndex].value);" >
+	        	<option select="selected" value="select">Select</option>
+	            <option <%= 'disabled="disabled"'     if running %> value=<%= "/start?task=#{id}&host=#{host}" %> >Start</option>
+	            <option <%= 'disabled="disabled"' unless running %> value=<%= "/stop/#{id}" %> >Stop</option>
+	            <option <%= 'disabled="disabled"' unless running %> value=<%= "/stop/#{id}?kill=true" %> >Kill</option>
+	            <option <%= 'disabled="disabled"'     if running %> value=<%= "/delete/#{id}" %> >Delete</option>
+	        </select>
 	     </td><td>
-	        <% l= "#{host}:#{info['pid']}" %><%= "<a href=\"/resque/workers/#{l}:#{info['environment']['QUEUE']}\">#{l}</a>" %>
+	        <% l= "#{host}:#{info['pid']}" %><%= "<a href=\"/resque/workers/#{l}:#{info['worker_queue']}\">#{l}</a>" %>
 	   </td></tr>
 	  <%end%>
 	  </table>

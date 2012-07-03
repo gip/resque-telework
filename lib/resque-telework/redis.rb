@@ -26,6 +26,10 @@ module Resque
       def workers_key( h ) # Hash
         "#{key_prefix}:host:#{h}:workers"
       end
+
+      def tasks_key( h ) # Hash
+        "#{key_prefix}:host:#{h}:tasks"
+      end
       
       def logs_key( h ) # Hash
         "#{key_prefix}:host:#{h}:logs"        
@@ -130,6 +134,16 @@ module Resque
         k= workers_key(h)
         Resque.redis.hdel(k, id)
       end
+
+      def tasks_add( h, id, info)
+        k= tasks_key(h)
+        Resque.redis.hset(k, id, info.to_json )
+      end
+      
+      def tasks_rem( h , id )
+        k= tasks_key(h)
+        Resque.redis.hdel(k, id)
+      end
       
       def cmds_pop( h )
         info= Resque.redis.rpop(cmds_key(h))
@@ -178,6 +192,16 @@ module Resque
         info= Resque.redis.hget(k, id)
         info ? ActiveSupport::JSON.decode(info) : nil
       end
+
+      def tasks( h )
+         Resque.redis.hgetall(tasks_key(h)).collect { |id, info| [id,  ActiveSupport::JSON.decode(info)] }
+      end
+      
+      def tasks_by_id( h, id )
+        k= tasks_key(h)
+        info= Resque.redis.hget(k, id)
+        info ? ActiveSupport::JSON.decode(info) : nil
+      end      
       
       def logs_by_id( h, id )
         k= logs_key(h)
