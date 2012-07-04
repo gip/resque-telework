@@ -31,10 +31,27 @@ function queuetext(val) {
 	}
 };
 function action(val) {
-    if(val == "Select" ) { return true; }
+	var params = val.split(",");
+    var url = "";
+    switch(params[0]) {
+	  case "start":
+	    url = "/start?task="+params[1]+"&host="+params[2]+"&rev="+document.getElementById("rev_filter_"+params[1]).value;
+	    break;
+	  case "stop":
+	    url = "/stop?kill=false&task="+params[1]+"&host="+params[2];
+	    break;
+	  case "kill":
+	    url = "/stop?kill=true&task="+params[1]+"&host="+params[2];
+	    break;
+	  case "delete":
+	    url = "/delete?task="+params[1]+"&host="+params[2];
+	    break;	
+	  default:
+	    return true;
+	}
 	var form = document.createElement("form");
     form.setAttribute("method", "post");
-    form.setAttribute("action", "/resque/telework"+val);
+    form.setAttribute("action", "/resque/telework"+url);
     document.body.appendChild(form);
     form.submit();
 };
@@ -45,6 +62,7 @@ $(document).ready(function() {
 });
 </script>
 
+<% redis.reconcile %>
 
 <% notes= redis.notes_pop %>
 <% if notes.length>0 %>
@@ -113,9 +131,9 @@ $(document).ready(function() {
       <th>Host</th>
       <th>Daemon</th>
       <th>Revisions</th>
-      <th>Workers</th>
+      <th>Tasks and Workers</th>
     </tr>
-    <% for host, status, info in redis.workers_state %>
+    <% for host, status, info in redis.daemons_state %>
       <tr>
       <td><%= host%>
 	      <% if 'Alive'==status && info['cpu_load_1mins'] %>
@@ -156,21 +174,27 @@ $(document).ready(function() {
 		     <th>Action</th>
 		<tr>
 	  <% for id, info in redis.tasks(host) %>
-	     <% running= info['worker_status']=='Running' %>
+	     <% running= info['worker_status']!='Stopped' %>
              <td><%= "<a href=\"/resque/telework/worker/#{host}/#{id}\">#{id}</a>" %>
 	    </td><td><%= "#{info['worker_status']}" %>
 	    </td><td><%= "#{info['queue']}" %>
-		</td><td><a href= <%= "/resque/telework/revision/#{info['revision']}" %> ><%= "#{info['revision_small']}" %></a>
+		</td><td><% if running %><a href= <%= "/resque/telework/revision/#{info['revision']}" %> ><%= "#{info['revision_small']}" %></a>
+			     <% else %> <select id= <%= "\"rev_filter_#{id}\"" %> name="r"/>
+			                   <% for rev in redis.revisions(host) %>
+			                   <option value=<%= "\"#{rev['revision']},#{rev['revision_small']}\"" %> ><%= rev['revision_small'] %></option>
+			                   <% end %>
+			                </select> 
+			     <% end %>
         </td><td>
 	        <select id="action" name="a" onchange="javascript: action(this.options[this.selectedIndex].value);" >
 	        	<option select="selected" value="select">Select</option>
-	            <option <%= 'disabled="disabled"'     if running %> value=<%= "/start?task=#{id}&host=#{host}" %> >Start</option>
-	            <option <%= 'disabled="disabled"' unless running %> value=<%= "/stop/#{id}" %> >Stop</option>
-	            <option <%= 'disabled="disabled"' unless running %> value=<%= "/stop/#{id}?kill=true" %> >Kill</option>
-	            <option <%= 'disabled="disabled"'     if running %> value=<%= "/delete/#{id}" %> >Delete</option>
+	            <option <%= 'disabled="disabled"'     if running %> value=<%= "\"start,#{id},#{host}\"" %> >Start worker</option>
+	            <option <%= 'disabled="disabled"' unless running %> value=<%= "\"stop,#{id},#{host}\"" %> >Stop worker</option>
+	            <option <%= 'disabled="disabled"' unless running %> value=<%= "\"kill,#{id},#{host}\"" %> >Kill worker</option>
+	            <option <%= 'disabled="disabled"'     if running %> value=<%= "\"delete,#{id},#{host}\"" %> >Delete</option>
 	        </select>
 	     </td><td>
-	        <% l= "#{host}:#{info['pid']}" %><%= "<a href=\"/resque/workers/#{l}:#{info['worker_queue']}\">#{l}</a>" %>
+	        <% l= "#{host}:#{info['worker_pid']}" %><%= "<a href=\"/resque/workers/#{l}:#{info['queue']}\">#{l}</a>" %>
 	   </td></tr>
 	  <%end%>
 	  </table>

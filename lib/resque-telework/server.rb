@@ -130,6 +130,7 @@ module Resque
             redirect "/resque/#{appn.downcase}"
           end
           
+          # Start a task
           app.post "/telework/start_task" do
             @host= params[:h]
             @queue= params[:q]
@@ -149,40 +150,35 @@ module Resque
             redirect "/resque/#{appn.downcase}"          
           end
           
+          app.post "/#{appn.downcase}/delete" do
+            @task_id= params[:task]
+            @host= params[:host]
+            puts "Removing task #{@task_id}"
+            redis.tasks_rem( @host, @task_id )
+            redirect "/resque/#{appn.downcase}"            
+          end
+          
           # Start a worker
           app.post "/#{appn.downcase}/start" do
             @task_id= params[:task]
             @host= params[:host]
+            @rev= params[:rev].split(',')
             @task= redis.tasks_by_id(@host, @task_id)
             @task['worker_id']= redis.unique_id.to_s
             @task['worker_status']= 'Starting'
+            @task['revision']= @rev[0]
+            @task['revision_small']= @rev[1]            
             redis.cmds_push( @host, @task.merge( {'command' => 'start_worker'} ) )
             redis.tasks_add( @host, @task_id, @task )
+            redirect "/resque/#{appn.downcase}"
           end
-          # # Start a worker
-          # app.post "/#{appn.downcase}_what_do_start_worker" do
-          #   @host= params[:h]
-          #   @queue= params[:q]
-          #   @qmanual= params[:qmanual]
-          #   @count= params[:c]
-          #   @rev= params[:r]
-          #   @env= params[:e]
-          #   @q= @qmanual.blank? ? @queue : @qmanual
-          #   redis.cmds_push( @host, { 'command' => 'start_worker', 'revision' => @rev,
-          #                             'worker_id' => redis.unique_id.to_s, 'worker_count' => @count,
-          #                             'rails_env' => @env, 'worker_queue' => @q,
-          #                             'exec' => "bundle exec rake resque:work --trace",
-          #                             'log_snapshot_period' => 30,        # TODO: move to config page 
-          #                             'log_snapshot_lines' => 40 } )      # TODO: move to config page
-          #   redirect "/resque/#{appn.downcase}"
-          # end
-          
-          app.post "/#{appn.downcase}_do_stop" do
-            @host= params[:h2]
-            @mid= params[:mid]
-            @kill= params[:kill]
-            puts "Stop on host '#{@host}' for id #{@mid}, kill is #{@kill}"
-            redis.cmds_push( @host, { 'command' => (@kill ? 'kill_worker' : 'stop_worker'), 'worker_id'=> @mid } )            
+
+          app.post "/#{appn.downcase}/stop" do
+            @task_id= params[:task]
+            @host= params[:host]
+            @kill= params[:kill]=="true"
+            @task= redis.tasks_by_id(@host, @task_id)
+            redis.cmds_push( @host, { 'command' => (@kill ? 'kill_worker' : 'stop_worker'), 'worker_id'=> @task['worker_id'] } ) 
             redirect "/resque/#{appn.downcase}"
           end
                               

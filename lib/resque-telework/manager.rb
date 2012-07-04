@@ -99,10 +99,10 @@ module Resque
           log_path||= "."
           rev= rev_info['revision']
           id= cmd['worker_id']
-          queuel= cmd['worker_queue'].gsub(/,/, '_').gsub(/\*/, 'STAR')
+          queuel= cmd['queue'].gsub(/,/, '_').gsub(/\*/, 'STAR')
           # Starting the job
           env= {}
-          env["QUEUE"]= cmd['worker_queue']
+          env["QUEUE"]= cmd['queue']
           env["RAILS_ENV"]= cmd['rails_env'] if "(default)" != cmd['rails_env']
           env["BUNDLE_GEMFILE"] = path+"/Gemfile" if ENV["BUNDLE_GEMFILE"]           # To make sure we use the new gems
           opt= { :in => "/dev/null", 

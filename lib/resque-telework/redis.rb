@@ -166,8 +166,8 @@ module Resque
       end
       
       # Server side
-        
-      def workers_state( clean = 30000000 )
+      
+      def daemons_state( clean = 30000000 )
         alive= []
         dead= []
         unknown= []
@@ -181,6 +181,23 @@ module Resque
           end
         end
         alive+dead+unknown
+      end
+      
+      # This function update the status of the tasks depending of what is found in workers
+      # This function must be idempotent
+      def reconcile
+        hosts.each do |h|
+          tasks(h).each do |id, info|
+            wid= info['worker_id']
+            worker= workers_by_id( h, wid )
+            status= worker ? "Running" : "Stopped"
+            if info['worker_status']!=status && (info['worker_status']!="Starting" || status!="Stopped" )
+              info['worker_status']= status
+              info['worker_pid']= worker['pid'] if worker
+              tasks_add( h, id, info )
+            end
+          end
+        end
       end
       
       def workers( h )
