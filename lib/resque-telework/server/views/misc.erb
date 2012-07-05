@@ -14,3 +14,8 @@ Please refer to <a href="https://github.com/gip/resque-telework">https://github.
 <tr><th width="100">Redis key prefix</th><td width="500"><%= redis.key_prefix %></td></tr>
 <tr><th width="100">Number of running workers</th><td width="500"><%= c=0; redis.hosts.each { |h| c+= redis.workers(h).length }; c %></td></tr>
 </table>
+<br><br>
+<h1>Configuration</h1><br>
+<table>
+<tr><th width="100">Configuration</th><td width="500"><%= redis.configuration %></td></tr>
+</table>

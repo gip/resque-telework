@@ -183,6 +183,14 @@ module Resque
         alive+dead+unknown
       end
       
+      def configuration
+        c= {}
+        hosts.each do |h|
+          c[h]= tasks(h).map{ |id, info| info }
+        end
+        c.to_json
+      end
+      
       # This function update the status of the tasks depending of what is found in workers
       # This function must be idempotent
       def reconcile

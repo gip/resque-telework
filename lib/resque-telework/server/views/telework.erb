@@ -135,9 +135,9 @@ $(document).ready(function() {
     </tr>
     <% for host, status, info in redis.daemons_state %>
       <tr>
-      <td><%= host%>
+      <td><center><%= host%>
 	      <% if 'Alive'==status && info['cpu_load_1mins'] %>
-	         <br><%= "(%.2f%% cpu)" % (100*info['cpu_load_1mins']) %>
+	         <br><%= "(%.2f%% cpu)" % (100*info['cpu_load_1mins']) %></center>
 	      <% end %>
 	  </td>
       <% if 'Alive'==status %>
@@ -172,12 +172,13 @@ $(document).ready(function() {
 		     <th>Queue(s)</th>
 		     <th>Revision</th>
 		     <th>Action</th>
+		     <th>Worker(s)</th>
 		<tr>
 	  <% for id, info in redis.tasks(host) %>
 	     <% running= info['worker_status']!='Stopped' %>
-             <td><%= "<a href=\"/resque/telework/worker/#{host}/#{id}\">#{id}</a>" %>
+             <td><%= "<a hreftbd=\"/resque/telework/task/#{host}/#{id}\">#{id}</a>" %>
 	    </td><td><%= "#{info['worker_status']}" %>
-	    </td><td><%= "#{info['queue']}" %>
+	    </td><td><%= "#{info['queue'].gsub(/,/,'<br/>')}" %>
 		</td><td><% if running %><a href= <%= "/resque/telework/revision/#{info['revision']}" %> ><%= "#{info['revision_small']}" %></a>
 			     <% else %> <select id= <%= "\"rev_filter_#{id}\"" %> name="r"/>
 			                   <% for rev in redis.revisions(host) %>
@@ -193,8 +194,9 @@ $(document).ready(function() {
 	            <option <%= 'disabled="disabled"' unless running %> value=<%= "\"kill,#{id},#{host}\"" %> >Kill worker</option>
 	            <option <%= 'disabled="disabled"'     if running %> value=<%= "\"delete,#{id},#{host}\"" %> >Delete</option>
 	        </select>
-	     </td><td>
-	        <% l= "#{host}:#{info['worker_pid']}" %><%= "<a href=\"/resque/workers/#{l}:#{info['queue']}\">#{l}</a>" %>
+	     </td><td align="center"><center>
+		    <%= "<a href=\"/resque/telework/worker/#{host}/#{info['worker_id']}\">Worker #{info['worker_id']}</a>" if running %>
+	        <% l= "#{host}:#{info['worker_pid']}" %><%= "<br/><a href=\"/resque/workers/#{l}:#{info['queue']}\">#{l}</a>" if running %></center>
 	   </td></tr>
 	  <%end%>
 	  </table>

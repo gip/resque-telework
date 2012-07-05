@@ -73,6 +73,11 @@ module Resque
             my_show 'worker' 
           end
           
+          app.get "/#{appn.downcase}/config" do
+            content_type :json
+            redis.configuration
+          end
+          
           app.post "/#{appn.downcase}_stopit/:worker" do
             @worker= params[:worker]
             @host= nil
