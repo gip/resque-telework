@@ -218,7 +218,7 @@ module Resque
             else
               "Unknown"
             end                      
-            if ts!=tstatus # && (info['worker_status']!="Starting" || status!="Stopped" )
+            if ts!=tstatus && (tstatus!="Starting" || wstatus!="STOP")
               info['worker_status']= ts
               info['worker_pid']= worker['pid'] if worker
               tasks_add( h, id, info )
