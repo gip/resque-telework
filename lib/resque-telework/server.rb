@@ -148,7 +148,7 @@ module Resque
             redis.tasks_add( @host , id, { 'revision' => @rev[0], 'revision_small' => @rev[1],
                                            'task_id' => id, 'worker_count' => @count,
                                            'rails_env' => @env, 'queue' => @q,
-                                           'exec' => "bundle exec rake resque:work --trace",
+                                           'exec' => "bundle exec rake resque:workers --trace",
                                            'worker_id' => nil, 'worker_status' => 'Stopped',
                                            'log_snapshot_period' => 30,
                                            'log_snapshot_lines' => 40 } )
@@ -178,12 +178,21 @@ module Resque
             redirect "/resque/#{appn.downcase}"
           end
 
+          app.post "/#{appn.downcase}/pause" do
+            @task_id= params[:task]
+            @host= params[:host]
+            @cont= params[:cont]=="true"
+            @task= redis.tasks_by_id(@host, @task_id)
+            redis.cmds_push( @host, { 'command' => 'signal_worker', 'worker_id'=> @task['worker_id'], 'action' => @cont ? 'CONT' : 'PAUSE' } ) 
+            redirect "/resque/#{appn.downcase}"
+          end
+
           app.post "/#{appn.downcase}/stop" do
             @task_id= params[:task]
             @host= params[:host]
             @kill= params[:kill]=="true"
             @task= redis.tasks_by_id(@host, @task_id)
-            redis.cmds_push( @host, { 'command' => (@kill ? 'kill_worker' : 'stop_worker'), 'worker_id'=> @task['worker_id'] } ) 
+            redis.cmds_push( @host, { 'command' => 'signal_worker', 'worker_id'=> @task['worker_id'], 'action' => @kill ? 'KILL' : 'QUIT' } ) 
             redirect "/resque/#{appn.downcase}"
           end
                               

@@ -198,9 +198,28 @@ module Resque
           tasks(h).each do |id, info|
             wid= info['worker_id']
             worker= workers_by_id( h, wid )
-            status= worker ? "Running" : "Stopped"
-            if info['worker_status']!=status && (info['worker_status']!="Starting" || status!="Stopped" )
-              info['worker_status']= status
+            wstatus= worker ? worker['status'] : 'STOP' # Worker status
+            tstatus= info['worker_status']               # Task status
+            # wstatus: QUIT, KILL, CONT, PAUSE, RUN, STOP
+            # tstatus: Running, Starting, Stopped, Paused
+            ts= case wstatus
+            when "QUIT"
+              "Quitting"
+            when "KILL"
+              "Killing"
+            when "CONT"
+              "Resuming"
+            when "PAUSE"
+              "Paused"
+            when "RUN"
+              "Running"
+            when "STOP"
+              "Stopped"
+            else
+              "Unknown"
+            end                      
+            if ts!=tstatus # && (info['worker_status']!="Starting" || status!="Stopped" )
+              info['worker_status']= ts
               info['worker_pid']= worker['pid'] if worker
               tasks_add( h, id, info )
             end
