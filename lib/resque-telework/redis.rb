@@ -196,31 +196,37 @@ module Resque
       def reconcile
         hosts.each do |h|
           tasks(h).each do |id, info|
-            wid= info['worker_id']
-            worker= workers_by_id( h, wid )
-            wstatus= worker ? worker['status'] : 'STOP' # Worker status
-            tstatus= info['worker_status']               # Task status
-            # wstatus: QUIT, KILL, CONT, PAUSE, RUN, STOP
-            # tstatus: Running, Starting, Stopped, Paused
-            ts= case wstatus
-            when "QUIT"
-              "Quitting"
-            when "KILL"
-              "Killing"
-            when "CONT"
-              "Resuming"
-            when "PAUSE"
-              "Paused"
-            when "RUN"
-              "Running"
-            when "STOP"
-              "Stopped"
-            else
-              "Unknown"
-            end                      
-            if ts!=tstatus && (tstatus!="Starting" || wstatus!="STOP")
+            statuses= []
+            pids= []
+            tstatus= info['worker_status']              # Task status
+            info['worker_id'].each do |id|
+              worker= workers_by_id( h, id )
+              wstatus= worker ? worker['status'] : 'STOP' # Worker status
+              # wstatus: QUIT, KILL, CONT, PAUSE, RUN, STOP
+              # tstatus: Running, Starting, Stopped, Paused
+              ws= case wstatus
+              when "QUIT"
+                "Quitting"
+              when "KILL"
+                "Killing"
+              when "CONT"
+                "Resuming"
+              when "PAUSE"
+                "Paused"
+              when "RUN"
+                "Running"
+              when "STOP"
+                "Stopped"
+              else
+                "Unknown"
+              end
+              statuses << ws
+              pids << worker['pid'] if worker
+            end
+            ts= statuses.uniq * ","
+            if ts!=tstatus #&& (tstatus!="Starting" || wstatus!="STOP")
               info['worker_status']= ts
-              info['worker_pid']= worker['pid'] if worker
+              info['worker_pid']= pids
               tasks_add( h, id, info )
             end
           end

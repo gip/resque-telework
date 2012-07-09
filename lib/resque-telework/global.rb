@@ -4,7 +4,7 @@ module Resque
       Name = NAME = 'resque-telework'
       Nickname = NICKNAME = 'telework'
       Version = VERSION = '0.2.0'
-      RedisInterfaceVersion = REDIS_INTERFACE_VERSION = '1'
+      RedisInterfaceVersion = REDIS_INTERFACE_VERSION = '2'
     end
   end
 end

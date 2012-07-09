@@ -201,13 +201,16 @@ $(document).ready(function() {
 	            <option <%= 'disabled="disabled"'     if running %> value=<%= "\"start,#{id},#{host}\"" %> >Start worker</option>
 	            <option <%= 'disabled="disabled"' unless running %> value=<%= "\"stop,#{id},#{host}\"" %> >Stop worker</option>
 	            <option <%= 'disabled="disabled"' unless running %> value=<%= "\"kill,#{id},#{host}\"" %> >Kill worker</option>
-	            <option <%= 'disabled="disabled"' unless running %> value=<%= "\"pause,#{id},#{host}\"" %> >Pause worker</option>
+	            <option <%= 'disabled="disabled"'     if (!running || paused) %> value=<%= "\"pause,#{id},#{host}\"" %> >Pause worker</option>
 	            <option <%= 'disabled="disabled"' unless paused %> value=<%= "\"cont,#{id},#{host}\"" %> >Resume worker</option>
 	            <option <%= 'disabled="disabled"'     if running %> value=<%= "\"delete,#{id},#{host}\"" %> >Delete</option>
 	        </select>
-	     </td><td align="center"><center>
-		    <%= "<a href=\"/resque/telework/worker/#{host}/#{info['worker_id']}\">Worker #{info['worker_id']}</a>" if running %>
-	        <% l= "#{host}:#{info['worker_pid']}" %><%= "<br/><a href=\"/resque/workers/#{l}:#{info['queue']}\">#{l}</a>" if running %></center>
+	     </td><td align="center"><p align="center"><font size="1">
+		    <% info['worker_id'].zip(info['worker_pid']) do |id,pid| %>
+		      <%= "<a href=\"/resque/telework/worker/#{host}/#{id}\">Worker #{id}</a>" if running %><br/>
+	          <font size=1><% l= "#{host}:#{pid}" %><%= "<a href=\"/resque/workers/#{l}:#{info['queue']}\">#{l}</a>" if running %></font><br/>
+	        <% end %>
+	        </font></p>
 	   </td></tr>
 	  <%end%>
 	  </table>

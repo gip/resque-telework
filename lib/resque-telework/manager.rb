@@ -101,7 +101,7 @@ module Resque
           # Starting the job
           env= {}
           env["QUEUE"]= cmd['queue']
-          env["COUNT"]= cmd['worker_count'] if cmd['worker_count']
+          # env["COUNT"]= cmd['worker_count'] if cmd['worker_count']
           env["RAILS_ENV"]= cmd['rails_env'] if "(default)" != cmd['rails_env']
           env["BUNDLE_GEMFILE"] = path+"/Gemfile" if ENV["BUNDLE_GEMFILE"]           # To make sure we use the new gems
           opt= { :in => "/dev/null", 
