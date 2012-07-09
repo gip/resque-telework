@@ -1,6 +1,8 @@
 Resque Telework
 ===============
 
+Note: resque-telework 0.2 will be realized soon (in the coming week). It is currently on the persistent_tasks branch and will be merged to master. A gem will also be created. Doc will also be updated.
+
 [github.com/gip/resque-telework](https://github.com/gip/resque-telework)
 
 Telework depends on Resque 1.19 and Redis 2.2
