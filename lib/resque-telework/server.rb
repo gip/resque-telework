@@ -158,7 +158,6 @@ module Resque
           app.post "/#{appn.downcase}/delete" do
             @task_id= params[:task]
             @host= params[:host]
-            puts "Removing task #{@task_id}"
             redis.tasks_rem( @host, @task_id )
             redirect "/resque/#{appn.downcase}"            
           end
@@ -169,7 +168,6 @@ module Resque
             @host= params[:host]
             @rev= params[:rev].split(',')
             @task= redis.tasks_by_id(@host, @task_id)
-            puts @task
             count= @task['worker_count'] || 1
             id= []
             for i in 1..count.to_i do
@@ -183,7 +181,6 @@ module Resque
               redis.cmds_push( @host, w )
             end
             @task['worker_id']= id
-            puts @task
             redis.tasks_add( @host, @task_id, @task )
             redirect "/resque/#{appn.downcase}"
           end

@@ -182,10 +182,12 @@ $(document).ready(function() {
 		     <th>Worker(s)</th>
 		<tr>
 	  <% for id, info in redis.tasks(host) %>
-	     <% running= info['worker_status']!='Stopped' %>
-	     <% paused=  info['worker_status']=='Paused' %>
+	     <% status= info['worker_status'] %>
+	     <% status= 'Stopped' if status.blank? %>
+	     <% running= status!='Stopped' %>
+	     <% paused=  status=='Paused' %>
              <td><%= "<a hreftbd=\"/resque/telework/task/#{host}/#{id}\">#{id}</a>" %>
-	    </td><td><%= "#{info['worker_status']}" %>
+	    </td><td><%= "#{status}" %>
 	    </td><td><%= "#{info['queue'].gsub(/,/,'<br/>')}" %>
 	    </td><td><%= "#{info['worker_count']}" %>
 		</td><td><% if running %><a href= <%= "/resque/telework/revision/#{info['revision']}" %> ><%= "#{info['revision_small']}" %></a>
