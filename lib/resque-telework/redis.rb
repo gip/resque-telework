@@ -263,8 +263,10 @@ module Resque
         Resque.redis.incr(ids_key)
       end
       
-      def cmds_push( h, info )
-        Resque.redis.lpush(cmds_key(h), info.to_json)
+      def cmds_push( h, info, ttl=300 )
+        k= cmds_key(h)
+        Resque.redis.lpush(k, info.to_json)
+        Resque.redis.expire(k, ttl)
       end
 
       def notes_push( info )
