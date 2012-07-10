@@ -178,6 +178,7 @@ module Resque
               w['revision']= @rev[0]
               w['revision_small']= @rev[1]
               w['command']= 'start_worker'
+              w['task_id']= @task_id
               redis.cmds_push( @host, w )
             end
             @task['worker_id']= id
