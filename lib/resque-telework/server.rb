@@ -121,10 +121,10 @@ module Resque
             my_show 'stopit'
           end
           
-          app.post "/#{appn.downcase}_add_note" do
-            @user= params[:user]
+          app.post "/#{appn.downcase}/add_note" do
+            @user= params[:note_user]
             @date= Time.now
-            @note= params[:note]
+            @note= params[:note_text]
             redis.notes_push({ 'user'=> @user, 'date'=> @date, 'note' => @note })
             redirect "/resque/#{appn.downcase}"
           end

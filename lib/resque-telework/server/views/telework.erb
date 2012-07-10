@@ -95,7 +95,6 @@ $(document).ready(function() {
 <br>
 <% end %>
 
-
 <% if @scheduling %>
 
 <h1>Starting Workers</h1>
@@ -130,6 +129,20 @@ $(document).ready(function() {
 </div><br><br><br><br>
 <% end %>
 
+<br>
+<% if @scheduling %>
+<h1>Adding Notes</h1>
+<br>
+<div class="clearfix">
+  <div class="control_panel sub_header">
+   <form id="noting" name="noting" method="post" action="/resque/telework/add_note">
+	<span class="note_user">User<input id="note_user" type="text" name="note_user"/></span>
+	<span class="note_text">Note<input id="note_text" type="text" size="100" name="note_text"/></span>
+	<span class="note_submit"><input type="submit" value="Add"/></span>
+   </form>
+   </div></div>
+<br><br><br><br>
+<% end %>
 
 <h1>Hosts, Revisions, Tasks and Workers</h1>
 <table>
