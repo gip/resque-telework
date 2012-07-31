@@ -1,11 +1,9 @@
 Resque Telework
 ===============
 
-Note: resque-telework 0.2 will be realized soon (in the coming week). It is currently on the persistent_tasks branch and will be merged to master. A gem will also be created. Doc will also be updated.
-
 [github.com/gip/resque-telework](https://github.com/gip/resque-telework)
 
-Telework depends on Resque 1.19 and Redis 2.2
+Telework depends on Resque 1.20+ and Redis 2.2+
 
 Description
 -----------
@@ -125,8 +123,9 @@ Note that it is not necessary to stop and restart the daemon. Restarting the dae
 Known Issues
 ------------
 
-For version 0.0.1:
+For version 0.2:
 
+* Buttons are not aligned in the web-UI
 * The daemon crashes if any of the log directories do not exist
 
 Bugs
@@ -140,14 +139,10 @@ Todo
 The following features are are being developed and should be available shortly:
 
 * Improved window layout
-* Worker history (there is currently no history for terminated workers)
 
 The following features are planned for future releases:
 
-* Seamless update of workers to newer revision (stop and then restart on new revision)
-* Automated stopping/starting of workers at given interval (to make sure workers are not stuck in bad states)
-* Light-weight daemon
-* Starting multiple workers at once
+* Light-weight daemon in Haskell
 * Worker statistics
 
 Thanks
