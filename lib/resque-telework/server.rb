@@ -73,6 +73,11 @@ module Resque
             my_show 'worker' 
           end
           
+          app.get "/#{appn.downcase}/config" do
+            content_type :json
+            redis.configuration
+          end
+          
           app.post "/#{appn.downcase}_stopit/:worker" do
             @worker= params[:worker]
             @host= nil
@@ -116,10 +121,10 @@ module Resque
             my_show 'stopit'
           end
           
-          app.post "/#{appn.downcase}_add_note" do
-            @user= params[:user]
+          app.post "/#{appn.downcase}/add_note" do
+            @user= params[:note_user]
             @date= Time.now
-            @note= params[:note]
+            @note= params[:note_text]
             redis.notes_push({ 'user'=> @user, 'date'=> @date, 'note' => @note })
             redirect "/resque/#{appn.downcase}"
           end
@@ -128,31 +133,78 @@ module Resque
             @note_id= params[:note]
             redis.notes_del(@note_id)
             redirect "/resque/#{appn.downcase}"
-          end          
+          end
           
-          app.post "/#{appn.downcase}_do_start" do
+          # Start a task
+          app.post "/telework/start_task" do
             @host= params[:h]
             @queue= params[:q]
             @qmanual= params[:qmanual]
             @count= params[:c]
-            @rev= params[:r]
+            @rev= params[:r].split(' ')
             @env= params[:e]
             @q= @qmanual.blank? ? @queue : @qmanual
-            redis.cmds_push( @host, { 'command' => 'start_worker', 'revision' => @rev,
-                                      'worker_id' => redis.unique_id.to_s, 'worker_count' => @count,
-                                      'rails_env' => @env, 'worker_queue' => @q,
-                                      'exec' => "bundle exec rake resque:work --trace",
-                                      'log_snapshot_period' => 30,        # TODO: move to config page 
-                                      'log_snapshot_lines' => 40 } )      # TODO: move to config page
-            redirect "/resque/#{appn.downcase}"
+            id= redis.unique_id.to_s
+            redis.tasks_add( @host , id, { 'revision' => @rev[0], 'revision_small' => @rev[1],
+                                           'task_id' => id, 'worker_count' => @count,
+                                           'rails_env' => @env, 'queue' => @q,
+                                           'exec' => "bundle exec rake resque:work --trace",
+                                           'worker_id' => [], 'worker_status' => 'Stopped',
+                                           'log_snapshot_period' => 30,
+                                           'log_snapshot_lines' => 40 } )
+            redirect "/resque/#{appn.downcase}"          
           end
           
-          app.post "/#{appn.downcase}_do_stop" do
-            @host= params[:h2]
-            @mid= params[:mid]
-            @kill= params[:kill]
-            puts "Stop on host '#{@host}' for id #{@mid}, kill is #{@kill}"
-            redis.cmds_push( @host, { 'command' => (@kill ? 'kill_worker' : 'stop_worker'), 'worker_id'=> @mid } )            
+          app.post "/#{appn.downcase}/delete" do
+            @task_id= params[:task]
+            @host= params[:host]
+            redis.tasks_rem( @host, @task_id )
+            redirect "/resque/#{appn.downcase}"            
+          end
+          
+          # Start workers
+          app.post "/#{appn.downcase}/start" do
+            @task_id= params[:task]
+            @host= params[:host]
+            @rev= params[:rev].split(',')
+            @task= redis.tasks_by_id(@host, @task_id)
+            count= @task['worker_count'] || 1
+            id= []
+            for i in 1..count.to_i do
+              w= @task
+              w['worker_id']= redis.unique_id.to_s
+              id << w['worker_id']
+              w['worker_status']= 'Starting'
+              w['revision']= @rev[0]
+              w['revision_small']= @rev[1]
+              w['command']= 'start_worker'
+              w['task_id']= @task_id
+              redis.cmds_push( @host, w )
+            end
+            @task['worker_id']= id
+            redis.tasks_add( @host, @task_id, @task )
+            redirect "/resque/#{appn.downcase}"
+          end
+
+          app.post "/#{appn.downcase}/pause" do
+            @task_id= params[:task]
+            @host= params[:host]
+            @cont= params[:cont]=="true"
+            @task= redis.tasks_by_id(@host, @task_id)
+            @task['worker_id'].each do |id|
+              redis.cmds_push( @host, { 'command' => 'signal_worker', 'worker_id'=> id, 'action' => @cont ? 'CONT' : 'PAUSE' } ) 
+            end
+            redirect "/resque/#{appn.downcase}"
+          end
+
+          app.post "/#{appn.downcase}/stop" do
+            @task_id= params[:task]
+            @host= params[:host]
+            @kill= params[:kill]=="true"
+            @task= redis.tasks_by_id(@host, @task_id)
+            @task['worker_id'].each do |id|
+              redis.cmds_push( @host, { 'command' => 'signal_worker', 'worker_id'=> id, 'action' => @kill ? 'KILL' : 'QUIT' } ) 
+            end
             redirect "/resque/#{appn.downcase}"
           end
                               

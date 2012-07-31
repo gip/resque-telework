@@ -26,6 +26,10 @@ module Resque
       def workers_key( h ) # Hash
         "#{key_prefix}:host:#{h}:workers"
       end
+
+      def tasks_key( h ) # Hash
+        "#{key_prefix}:host:#{h}:tasks"
+      end
       
       def logs_key( h ) # Hash
         "#{key_prefix}:host:#{h}:logs"        
@@ -130,6 +134,16 @@ module Resque
         k= workers_key(h)
         Resque.redis.hdel(k, id)
       end
+
+      def tasks_add( h, id, info)
+        k= tasks_key(h)
+        Resque.redis.hset(k, id, info.to_json )
+      end
+      
+      def tasks_rem( h , id )
+        k= tasks_key(h)
+        Resque.redis.hdel(k, id)
+      end
       
       def cmds_pop( h )
         info= Resque.redis.rpop(cmds_key(h))
@@ -152,8 +166,8 @@ module Resque
       end
       
       # Server side
-        
-      def workers_state( clean = 30000000 )
+      
+      def daemons_state( clean = 30000000 )
         alive= []
         dead= []
         unknown= []
@@ -169,6 +183,56 @@ module Resque
         alive+dead+unknown
       end
       
+      def configuration
+        c= {}
+        hosts.each do |h|
+          c[h]= tasks(h).map{ |id, info| info }
+        end
+        c.to_json
+      end
+      
+      # This function update the status of the tasks depending of what is found in workers
+      # This function must be idempotent
+      def reconcile
+        hosts.each do |h|
+          tasks(h).each do |id, info|
+            statuses= []
+            pids= []
+            tstatus= info['worker_status']              # Task status
+            info['worker_id'].each do |id|
+              worker= workers_by_id( h, id )
+              wstatus= worker ? worker['status'] : 'STOP' # Worker status
+              # wstatus: QUIT, KILL, CONT, PAUSE, RUN, STOP
+              # tstatus: Running, Starting, Stopped, Paused
+              ws= case wstatus
+              when "QUIT"
+                "Quitting"
+              when "KILL"
+                "Killing"
+              when "CONT"
+                "Resuming"
+              when "PAUSE"
+                "Paused"
+              when "RUN"
+                "Running"
+              when "STOP"
+                "Stopped"
+              else
+                "Unknown"
+              end
+              statuses << ws
+              pids << worker['pid'] if worker
+            end
+            ts= statuses.uniq * ","
+            if ts!=tstatus #&& (tstatus!="Starting" || wstatus!="STOP")
+              info['worker_status']= ts
+              info['worker_pid']= pids
+              tasks_add( h, id, info )
+            end
+          end
+        end
+      end
+      
       def workers( h )
          Resque.redis.hgetall(workers_key(h)).collect { |id, info| [id,  ActiveSupport::JSON.decode(info)] }
       end
@@ -178,6 +242,16 @@ module Resque
         info= Resque.redis.hget(k, id)
         info ? ActiveSupport::JSON.decode(info) : nil
       end
+
+      def tasks( h )
+         Resque.redis.hgetall(tasks_key(h)).collect { |id, info| [id,  ActiveSupport::JSON.decode(info)] }
+      end
+      
+      def tasks_by_id( h, id )
+        k= tasks_key(h)
+        info= Resque.redis.hget(k, id)
+        info ? ActiveSupport::JSON.decode(info) : nil
+      end      
       
       def logs_by_id( h, id )
         k= logs_key(h)
@@ -189,8 +263,10 @@ module Resque
         Resque.redis.incr(ids_key)
       end
       
-      def cmds_push( h, info )
-        Resque.redis.lpush(cmds_key(h), info.to_json)
+      def cmds_push( h, info, ttl=300 )
+        k= cmds_key(h)
+        Resque.redis.lpush(k, info.to_json)
+        Resque.redis.expire(k, ttl)
       end
 
       def notes_push( info )

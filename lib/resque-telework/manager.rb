@@ -77,10 +77,8 @@ module Resque
           case cmd['command']
           when 'start_worker'
             start_worker( cmd, find_revision(cmd['revision']) )
-          when 'stop_worker'
-            stop_worker( cmd )
-          when 'kill_worker'
-            stop_worker( cmd, true )
+          when 'signal_worker'
+            manage_worker( cmd )
           when 'stop_daemon'
             @RUN_DAEMON= false
           when 'kill_daemon'
@@ -99,10 +97,11 @@ module Resque
           log_path||= "."
           rev= rev_info['revision']
           id= cmd['worker_id']
-          queuel= cmd['worker_queue'].gsub(/,/, '_').gsub(/\*/, 'STAR')
+          queuel= cmd['queue'].gsub(/,/, '_').gsub(/\*/, 'STAR')
           # Starting the job
           env= {}
-          env["QUEUE"]= cmd['worker_queue']
+          env["QUEUE"]= cmd['queue']
+          # env["COUNT"]= cmd['worker_count'] if cmd['worker_count']
           env["RAILS_ENV"]= cmd['rails_env'] if "(default)" != cmd['rails_env']
           env["BUNDLE_GEMFILE"] = path+"/Gemfile" if ENV["BUNDLE_GEMFILE"]           # To make sure we use the new gems
           opt= { :in => "/dev/null", 
@@ -112,7 +111,7 @@ module Resque
                  :unsetenv_others => false }
           exec= cmd['exec']
           pid= spawn( env, exec, opt) # Start it!
-          info= { 'pid' => pid, 'status' => 'running', 'environment' => env, 'options' => opt, 'revision_info' => rev_info }
+          info= { 'pid' => pid, 'status' => 'RUN', 'environment' => env, 'options' => opt, 'revision_info' => rev_info }
           # Log snapshot
           info['log_snapshot_period']= cmd['log_snapshot_period'] if cmd['log_snapshot_period']
           info['log_snapshort_lines']= cmd['log_snapshot_lines'] if cmd['log_snapshot_lines']
@@ -131,16 +130,19 @@ module Resque
           File.open("#{log_path}/telework_#{id}.log", 'w') { |f| f.write(intro) }
         end
 
-        def stop_worker ( cmd, kill=false )
+        def manage_worker ( cmd )
           id= cmd['worker_id']
+          sig= cmd['action'] # Can be QUIT, KILL, CONT, PAUSE
           info= @WORKERS[id]
           send_status( 'Error', "Worker #{id} was not found on this host" ) unless info
           return unless info
-          sig= kill ? "KILL" : "QUIT"
-          send_status( 'Info', "Stopping worker #{id} (PID #{info['pid']}) using signal #{sig}" )
-          Process.kill( sig, info['pid'] )
-          @STOPPED << id
-          info['status']= kill ? 'killed' : 'exiting'
+          status= sig
+          sig= 'USR2' if 'PAUSE'==sig # Pause a Resque worker using USR2 signal
+          status= 'RUN' if status=='CONT'
+          send_status( 'Info', "Signaling worker #{id} (PID #{info['pid']}) using signal #{sig}" )
+          Process.kill( sig, info['pid'] ) # Signaling...
+          @STOPPED << id if 'QUIT'==sig || 'KILL'==sig
+          info['status']= status
           workers_add( @HOST, id, info )
           @WORKERS[id]= info
         end
