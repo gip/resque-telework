@@ -206,6 +206,21 @@ module Resque
             end
             redirect "/resque/#{appn.downcase}"
           end
+
+          app.post "/#{appn.downcase}/stop_all" do
+            @kill= params[:mode]=="Kill"
+            hl= [ params[:h] ]
+            hl= redis.hosts if params[:h]=="[All hosts]"
+            hl.each do |h|
+              redis.workers(h).each do |id, info|
+                unless info['worker_status']=='Stopped'
+                  redis.cmds_push( h, { 'command' => 'signal_worker', 'worker_id'=> id, 'action' => @kill ? 'KILL' : 'QUIT' } ) 
+                end
+              end
+            end
+            redirect "/resque/#{appn.downcase}"
+          end
+
                               
           app.tabs << appn
           

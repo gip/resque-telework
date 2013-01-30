@@ -229,6 +229,12 @@ $(document).ready(function() {
       </tr>
     <% end %>
 </table>
+</br>
+<form id="stopping_all" name="stopping_all" method="post" action="/resque/telework/stop_all">
+	<%= generic_filter("mode_filter", "m", ["Stop", "Kill"]) %>
+	 all workers on host <%= generic_filter("host_filter", "h", redis.hosts <<  "[All hosts]") %>
+	<span class="stopping_all_submit"><input type="submit" value="Go"/></span>
+</form></br></br>
 
 <br>
 <% if @status_messages %>
