@@ -141,12 +141,11 @@ module Resque
             @queue= params[:q]
             @qmanual= params[:qmanual]
             @count= params[:c]
-            @rev= params[:r].split(' ')
+            #@rev= params[:r].split(' ')
             @env= params[:e]
             @q= @qmanual.blank? ? @queue : @qmanual
             id= redis.unique_id.to_s
-            redis.tasks_add( @host , id, { 'revision' => @rev[0], 'revision_small' => @rev[1],
-                                           'task_id' => id, 'worker_count' => @count,
+            redis.tasks_add( @host , id, { 'task_id' => id, 'worker_count' => @count,
                                            'rails_env' => @env, 'queue' => @q,
                                            'exec' => "bundle exec rake resque:work --trace",
                                            'worker_id' => [], 'worker_status' => 'Stopped',
