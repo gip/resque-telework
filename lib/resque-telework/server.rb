@@ -167,7 +167,7 @@ module Resque
             @host= params[:host]
             @rev= params[:rev].split(',')
             @task= redis.tasks_by_id(@host, @task_id)
-            count= @task['worker_count'] || 1
+            count= params[:count]
             id= []
             for i in 1..count.to_i do
               w= @task
@@ -181,6 +181,7 @@ module Resque
               redis.cmds_push( @host, w )
             end
             @task['worker_id']= id
+            @task['worker_count']= count
             redis.tasks_add( @host, @task_id, @task )
             redirect "/resque/#{appn.downcase}"
           end

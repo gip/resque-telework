@@ -35,7 +35,8 @@ function action(val) {
     var url = "";
     switch(params[0]) {
 	  case "start":
-	    url = "/start?task="+params[1]+"&host="+params[2]+"&rev="+document.getElementById("rev_filter_"+params[1]).value;
+	    url = "/start?task="+params[1]+"&host="+params[2]+"&rev="+document.getElementById("rev_filter_"+params[1]).value+
+	                                                      "&count="+document.getElementById("count_filter_"+params[1]).value;
 	    break;
 	  case "pause":
 	    url = "/pause?task="+params[1]+"&host="+params[2];
@@ -141,6 +142,11 @@ $(document).ready(function() {
 <% end %>
 
 <h1>Hosts, Revisions, Tasks and Workers</h1>
+<form id="stopping_all" name="stopping_all" method="post" action="/resque/telework/stop_all">
+	<%= generic_filter("mode_filter", "m", ["Stop", "Kill"]) %>
+	 all workers on host <%= generic_filter("host_filter", "h", redis.hosts <<  "[All hosts]") %>
+	<span class="stopping_all_submit"><input type="submit" value="Go"/></span>
+</form></br>
 <table>
     <tr>
       <th>Host</th>
@@ -198,7 +204,12 @@ $(document).ready(function() {
              <td><%= "<a hreftbd=\"/resque/telework/task/#{host}/#{id}\">#{id}</a>" %>
 	    </td><td><%= "#{status}" %>
 	    </td><td><%= "#{info['queue'].gsub(/,/,'<br/>')}" %>
-	    </td><td><%= "#{info['worker_count']}" %>
+	    </td><td><% if running%><%= "#{info['worker_count']}" %>
+                    <% else %><select id= <%= "\"count_filter_#{id}\"" %> name="c"/>
+                               <% for co in (1..8).to_a %>
+                                 <option <%= co==info['worker_count'].to_i ? 'selected="selected"' : '' %>value=<%= "#{co}"%> ><%= co %></option>
+                             <% end %>
+                    </select><% end %>
 		</td><td><% if running %><a href= <%= "/resque/telework/revision/#{info['revision']}" %> ><%= "#{info['revision_small']}" %></a>
 			     <% else %> <select id= <%= "\"rev_filter_#{id}\"" %> name="r"/>
 			                   <% for rev in redis.revisions(host) %>
