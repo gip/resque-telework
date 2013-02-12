@@ -3,6 +3,20 @@
 <META HTTP-EQUIV="refresh" CONTENT="<%= @refresh%>">
 <% end %>
 
+<link href="<%= url_path("/telework?css=sliders.css") %>" rel="stylesheet" type="text/css" />
+<link href="<%= url_path("/telework?css=jqueryui-1.8.16/blitzer/jquery-ui.custom.css") %>" rel="stylesheet" type="text/css" />
+<script src="<%= url_path("/telework?js=jquery-ui-1.8.16.custom.min.js") %>" type="text/javascript"></script>
+<script src="<%= url_path("/telework?js=sliders.js") %>" type="text/javascript"></script>
+
+Hello
+<table><tr><td>
+<span class="controls">
+<ul><li style="list-style-type:none;" class="icons"><span id="whatever0" class="ui-icon ui-corner-all ui-state-default ui-icon-play"></span></li>
+<li style="list-style-type:none;" class="icons"><span id="whatever1" class="ui-icon ui-corner-all ui-state-default ui-icon-stop"></span></li></ul>
+</span></td></tr>
+</table>
+<br/><br/>
+
 
 <script language="javascript" type="text/javascript">
 function hostlist(index) {

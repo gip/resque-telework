@@ -38,11 +38,24 @@ module Resque
               end
               html += "</select>"
             end
-            
+            def public_view(filename, dir='')
+              file = File.join(PUBLIC_PATH, dir, filename)
+              begin
+                cache_control :public, :max_age => 1800
+                send_file file
+              rescue Errno::ENOENT
+                404
+              end
+            end
           end
 
           app.get "/#{appn.downcase}" do
-            redirect "/resque/#{appn.downcase}/Overview"
+            key = params.keys.first
+            if %w(img css js).include? key
+              public_view(params[key], key == 'img' ? 'images' : key)
+            else
+              redirect "/resque/#{appn.downcase}/Overview"
+            end
           end
           
           app.get "/#{appn.downcase}/Overview" do
