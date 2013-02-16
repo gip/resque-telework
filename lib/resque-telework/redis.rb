@@ -7,6 +7,10 @@ module Resque
         "plugins:#{Resque::Plugins::Telework::Nickname}"
       end
 
+      def queue_prefix
+        "queue:"
+      end
+
       def redis_interface_key # String
         "#{key_prefix}:redisif"
       end
@@ -25,6 +29,10 @@ module Resque
         
       def workers_key( h ) # Hash
         "#{key_prefix}:host:#{h}:workers"
+      end
+
+      def autos_key( h ) # Hash
+        "#{key_prefix}:host:#{h}:autos"
       end
 
       def tasks_key( h ) # Hash
@@ -129,9 +137,20 @@ module Resque
         Resque.redis.hset(k, id, info.to_json )
         Resque.redis.expire(k, ttl)
       end
+
+      def autos_add( h, id, info, ttl=10 )
+        k= autos_key(h)
+        Resque.redis.hset(k, id, info.to_json )
+        Resque.redis.expire(k, ttl)
+      end
       
       def workers_rem( h , id )
         k= workers_key(h)
+        Resque.redis.hdel(k, id)
+      end
+
+      def autos_rem( h , id )
+        k= autos_key(h)
         Resque.redis.hdel(k, id)
       end
 
@@ -195,7 +214,8 @@ module Resque
       # This function must be idempotent
       def reconcile
         hosts.each do |h|
-          tasks(h).each do |id, info|
+          tasks(h).each do |tid, info|
+            auto= autos_by_id( h, tid )
             statuses= []
             pids= []
             tstatus= info['worker_status']              # Task status
@@ -217,17 +237,22 @@ module Resque
                 "Running"
               when "STOP"
                 "Stopped"
+              when "AUTO"
+                "Auto"
               else
                 "Unknown"
               end
               statuses << ws
               pids << worker['pid'] if worker
             end
-            ts= statuses.uniq * ","
-            if ts!=tstatus #&& (tstatus!="Starting" || wstatus!="STOP")
+            ts= if statuses.uniq.length==1 then statuses[0] else statuses * "," end
+            mode= auto ? 'Auto' : 'Manual'
+            if ts!=tstatus || info['mode']!=mode #&& (tstatus!="Starting" || wstatus!="STOP")
+              info['last_changed']= Time.now
               info['worker_status']= ts
               info['worker_pid']= pids
-              tasks_add( h, id, info )
+              info['mode']= mode
+              tasks_add( h, tid, info )
             end
           end
         end
@@ -236,11 +261,18 @@ module Resque
       def workers( h )
          Resque.redis.hgetall(workers_key(h)).collect { |id, info| [id,  ActiveSupport::JSON.decode(info)] }
       end
-      
-      def workers_by_id( h, id )
-        k= workers_key(h)
+
+      def get_by_id( k, id)
         info= Resque.redis.hget(k, id)
-        info ? ActiveSupport::JSON.decode(info) : nil
+        info ? ActiveSupport::JSON.decode(info) : nil        
+      end
+
+      def autos_by_id( h, id )
+        get_by_id( autos_key(h), id)
+      end
+
+      def workers_by_id( h, id )
+        get_by_id( workers_key(h), id)
       end
 
       def tasks( h )
@@ -248,15 +280,11 @@ module Resque
       end
       
       def tasks_by_id( h, id )
-        k= tasks_key(h)
-        info= Resque.redis.hget(k, id)
-        info ? ActiveSupport::JSON.decode(info) : nil
+        get_by_id( tasks_key(h), id)
       end      
       
       def logs_by_id( h, id )
-        k= logs_key(h)
-        info= Resque.redis.hget(k, id)
-        info ? ActiveSupport::JSON.decode(info) : nil      
+        get_by_id( logs_key(h), id)     
       end
       
       def unique_id
@@ -326,6 +354,14 @@ module Resque
         Resque.redis.keys("#{key_prefix}:*").length
       end
       
+      def queue_length( q )
+        Resque.redis.llen("#{queue_prefix}#{q}")
+      end
+
+      def queue_list
+        Resque.redis.smembers("queues")
+      end
+
       def fmt_date( t, rel=false ) # This is not redis-specific and should be moved to another class!
         begin
           if rel

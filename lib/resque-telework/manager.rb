@@ -11,6 +11,8 @@ module Resque
           @SLEEP= cfg['daemon_pooling_interval']
           @WORKERS= {}
           @STOPPED= []
+          @HAS_AUTO= false
+          @AUTO= {}
         end
         
         # The manager (e.g. daemon) main loop
@@ -33,6 +35,7 @@ module Resque
               while cmd= cmds_pop( @HOST ) do    # Pop a command in the command queue
                 do_command(cmd)                  # Execute it
               end
+              check_auto                         # Deal with the task in auto mode
               sleep @SLEEP                       # Sleep
             end
                                                  # A stop request has been received
@@ -79,6 +82,10 @@ module Resque
             start_worker( cmd, find_revision(cmd['revision']) )
           when 'signal_worker'
             manage_worker( cmd )
+          when 'start_auto'
+            start_auto( cmd, find_revision(cmd['revision']) )
+          when 'stop_auto'
+            stop_auto( cmd )
           when 'stop_daemon'
             @RUN_DAEMON= false
           when 'kill_daemon'
@@ -88,9 +95,89 @@ module Resque
             send_status( 'Error', "Unknown command '#{cmd['command']}'" )
           end
         end
+
+        def stop_auto( auto )
+          id= auto['task_id']
+          @AUTO.delete(auto['task_id'])
+          autos_rem( @HOST, id )
+          send_status( 'Info', "Task #{id} is now in manual mode")
+        end
+
+        def status_auto( id, auto )
+          n= nvoid= nrun= 0
+          auto['worker_status']= []
+          auto['worker_id'].each do |id|
+            s= @WORKERS[id] ? @WORKERS[id]['status'] : 'VOID'
+            nvoid+= 1 if 'VOID'==s
+            nrun+= 1 if 'RUN'==s
+            n+= 1
+            auto['worker_status'] << s
+          end
+          auto['worker_run']= nrun
+          auto['worker_void']= nvoid
+          auto['worker_unknown']= n-nrun-nvoid
+          @AUTO[id]= auto
+          auto
+        end
+
+        def manage_auto( auto, status, action, n0 )
+          n= 0
+          auto['worker_status'].each_with_index do |s, i|
+            if s==status
+              cmd= auto.clone
+              cmd['worker_id']= auto['worker_id'][i]
+              if 'START'==action 
+                start_worker( cmd, cmd['rev_info'], true )
+              else
+                cmd['action']= action
+                manage_worker( cmd )
+              end
+              n+= 1
+            end
+            break if n==n0
+          end
+        end
+
+        def check_auto
+          @AUTO.keys.each do |id|
+            auto= @AUTO[id]
+            autos_add( @HOST, id, auto )
+            next unless auto['last_action']+auto['auto_delay'] <= Time.now
+            auto= status_auto( id, @AUTO[id] )  # Compute the new status..
+            ql= get_queue_length( auto['queue'] )
+            ideal= (ql.to_f / auto['max_waiting_job_per_worker'].to_f).ceil
+            count= auto['worker_count'].to_i
+            case ideal <=> (count-auto['worker_void'])
+            when 0  # Do nothing
+            when 1 # Increase number of workers if possible
+              inc= [ideal-auto['worker_run'], auto['worker_void']].min
+              manage_auto( auto, 'VOID', 'START', inc ) if inc>0
+            when -1  # Decrease number of workers if possible
+              dec= [auto['worker_run']-ideal, auto['worker_run']].min
+              manage_auto( auto, 'RUN', 'QUIT', dec ) if dec>0
+            end
+          end
+        end
+
+        # Start auto session
+        def start_auto( cmd0, rev_info )
+          auto_def= { 'max_waiting_job_per_worker' => 1,'worker_min' => 0, 'auto_delay' => 15 }
+          cmd= auto_def.merge( cmd0 )
+          id= cmd['task_id']
+          if @AUTO[id]
+            send_status( 'Error', "Task #{id} is already running in auto mode")
+            return
+          end
+          send_status( 'Info', "Task #{id} is now in auto mode")
+          auto= cmd                       # Should be defined in cmd: task_id, worker_count, worker_id, queue, rails_env, exec
+          auto['rev_info']= rev_info
+          # Get status for the workers
+          auto['last_action']= Time.now - auto['auto_delay']
+          @AUTO[id]= auto       
+        end
         
         # Start a task
-        def start_worker( cmd, rev_info )
+        def start_worker( cmd, rev_info, auto=false )
           # Retrieving args
           path= rev_info['revision_path']
           log_path= rev_info['revision_log_path']
@@ -115,6 +202,7 @@ module Resque
           # Log snapshot
           info['log_snapshot_period']= cmd['log_snapshot_period'] if cmd['log_snapshot_period']
           info['log_snapshort_lines']= cmd['log_snapshot_lines'] if cmd['log_snapshot_lines']
+          info['mode']= auto ? 'Auto' : 'Manual'
           @WORKERS[id]= info
           workers_add( @HOST, id, info )
           send_status( 'Info', "Starting worker #{id} (PID #{pid})" )
@@ -174,6 +262,12 @@ module Resque
               workers_add( @HOST, id, @WORKERS[id] )
             end            
           end
+        end
+
+        def get_queue_length( qs )
+          ql= qs.split(",")
+          l= ql.include?("*") ? queue_list : ql
+          l.inject(0) { |a,e| a+queue_length(e) }
         end
         
         def update_log_snapshot( id )

@@ -52,7 +52,14 @@ function action(val) {
 	    break;
 	  case "delete":
 	    url = "/delete?task="+params[1]+"&host="+params[2];
-	    break;	
+	    break;
+	  case "auto":
+	    url = "/start_auto?task="+params[1]+"&host="+params[2]+"&rev="+document.getElementById("rev_filter_"+params[1]).value+
+	                                                      "&count="+document.getElementById("count_filter_"+params[1]).value;
+	    break;
+	  case "autostop":
+	    url = "/stop_auto?kill=true&task="+params[1]+"&host="+params[2];
+	    break;	    
 	  default:
 	    return true;
 	}
@@ -197,13 +204,19 @@ $(document).ready(function() {
 		     <th>Worker(s)</th>
 		<tr>
 	  <% for id, info in redis.tasks(host) %>
+	  	 <% auto= info['mode']=='Auto' %>
 	     <% status= info['worker_status'] %>
 	     <% status= 'Stopped' if status.blank? %>
 	     <% running= status!='Stopped' %>
 	     <% paused=  status=='Paused' %>
              <td><%= "<a hreftbd=\"/resque/telework/task/#{host}/#{id}\">#{id}</a>" %>
-	    </td><td><%= "#{status}" %>
-	    </td><td><%= "#{info['queue'].gsub(/,/,'<br/>')}" %>
+	    </td><td><center><%= auto ? "<b>Auto</b><br/><br/>" : "" %><%= "#{status.gsub(/,/,'<br/>')}" %> </center>
+	    </td><td><% for q in info['queue'].split(",") %>
+	    <% if q=="*" %>*
+	    <% else %> <% ql= redis.queue_length(q) %>
+	    <% if ql==0 %><font color="grey"><span title="Queue is empty"><%= q %></span></font><br/>
+	    <% else %><span title="<%= "Queue has #{ql} jobs" %>" ><%= q %></span>
+	    <% end %><% end %><% end %>
 	    </td><td><% if running%><%= "#{info['worker_count']}" %>
                     <% else %><select id= <%= "\"count_filter_#{id}\"" %> name="c"/>
                                <% for co in (1..8).to_a %>
@@ -220,18 +233,20 @@ $(document).ready(function() {
         </td><td>
 	        <select id="action" name="a" onchange="javascript: action(this.options[this.selectedIndex].value);" >
 	        	<option select="selected" value="select">Select</option>
-	            <option <%= 'disabled="disabled"'     if running %> value=<%= "\"start,#{id},#{host}\"" %> >Start worker</option>
-	            <option <%= 'disabled="disabled"' unless running %> value=<%= "\"stop,#{id},#{host}\"" %> >Stop worker</option>
-	            <option <%= 'disabled="disabled"' unless running %> value=<%= "\"kill,#{id},#{host}\"" %> >Kill worker</option>
-	            <option <%= 'disabled="disabled"'     if (!running || paused) %> value=<%= "\"pause,#{id},#{host}\"" %> >Pause worker</option>
-	            <option <%= 'disabled="disabled"' unless paused %> value=<%= "\"cont,#{id},#{host}\"" %> >Resume worker</option>
-	            <option <%= 'disabled="disabled"'     if running %> value=<%= "\"delete,#{id},#{host}\"" %> >Delete</option>
+	            <option <%= 'disabled="disabled"'     if running || auto %> value=<%= "\"start,#{id},#{host}\"" %> >Start worker</option>
+	            <option <%= 'disabled="disabled"' unless running && !auto %> value=<%= "\"stop,#{id},#{host}\"" %> >Stop worker</option>
+	            <option <%= 'disabled="disabled"' unless running && !auto %> value=<%= "\"kill,#{id},#{host}\"" %> >Kill worker</option>
+	            <option <%= 'disabled="disabled"'     if (!running || paused || auto) %> value=<%= "\"pause,#{id},#{host}\"" %> >Pause worker</option>
+	            <option <%= 'disabled="disabled"' unless paused && !auto %> value=<%= "\"cont,#{id},#{host}\"" %> >Resume worker</option>
+	            <option <%= 'disabled="disabled"'     if auto || running %> value=<%= "\"auto,#{id},#{host}\"" %> >Start auto</option>
+	            <option <%= 'disabled="disabled"'     unless auto %> value=<%= "\"autostop,#{id},#{host}\"" %> >Stop auto</option>	    
+	            <option <%= 'disabled="disabled"'     if running || auto %> value=<%= "\"delete,#{id},#{host}\"" %> >Delete</option>        
 	        </select>
 	     </td><td align="center"><p align="center"><font size="1">
-		    <% info['worker_id'].zip(info['worker_pid']) do |id,pid| %>
+		    <% info['worker_id'].zip(info['worker_pid']) do |id,pid| %><% unless pid.blank? %>
 		      <%= "<a href=\"/resque/telework/worker/#{host}/#{id}\">Worker #{id}</a>" if running %><br/>
 	          <font size=1><% l= "#{host}:#{pid}" %><%= "<a href=\"/resque/workers/#{l}:#{info['queue']}\">#{l}</a>" if running %></font><br/>
-	        <% end %>
+	        <% end %><% end %>
 	        </font></p>
 	   </td></tr>
 	  <%end%>

@@ -186,6 +186,41 @@ module Resque
             redirect "/resque/#{appn.downcase}"
           end
 
+          app.post "/#{appn.downcase}/start_auto" do
+            @task_id= params[:task]
+            @host= params[:host]
+            @rev= params[:rev].split(',')
+            @task= redis.tasks_by_id(@host, @task_id)
+            count= params[:count]        
+            wid= []
+            for i in 1..count.to_i do
+              wid << redis.unique_id.to_s
+              #redis.cmds_push( @host, w )
+            end
+            @task['worker_id']= wid
+            @task['worker_count']= count
+            @task['mode']= 'auto'
+            cmd= @task
+            cmd['task_id']= @task_id
+            cmd['revision']= @rev[0]
+            cmd['revision_small']= @rev[1]
+            cmd['command']= 'start_auto'
+            redis.cmds_push( @host, cmd )
+            redis.tasks_add( @host, @task_id, @task )
+            redirect "/resque/#{appn.downcase}"
+          end
+
+          app.post "/#{appn.downcase}/stop_auto" do
+            @task_id= params[:task]
+            @host= params[:host]
+            @task= redis.tasks_by_id(@host, @task_id)
+            cmd= @task
+            cmd['command']= 'stop_auto' 
+            redis.cmds_push( @host, cmd )
+            redirect "/resque/#{appn.downcase}"                
+          end
+
+
           app.post "/#{appn.downcase}/pause" do
             @task_id= params[:task]
             @host= params[:host]
