@@ -11,7 +11,6 @@ module Resque
           @SLEEP= cfg['daemon_pooling_interval']
           @WORKERS= {}
           @STOPPED= []
-          @HAS_AUTO= false
           @AUTO= {}
         end
         
@@ -145,7 +144,7 @@ module Resque
             next unless auto['last_action']+auto['auto_delay'] <= Time.now
             auto= status_auto( id, @AUTO[id] )  # Compute the new status..
             ql= get_queue_length( auto['queue'] )
-            ideal= (ql.to_f / auto['max_waiting_job_per_worker'].to_f).ceil
+            ideal= [(ql.to_f / auto['max_waiting_job_per_worker'].to_f).ceil, auto['worker_min']].max
             count= auto['worker_count'].to_i
             case ideal <=> (count-auto['worker_void'])
             when 0  # Do nothing
