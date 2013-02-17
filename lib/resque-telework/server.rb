@@ -46,8 +46,12 @@ module Resque
           end
           
           app.get "/#{appn.downcase}/Overview" do
-            @status_messages= 100
             @refresh= 10
+            if params[:refresh]
+              @refresh= params[:refresh].to_i
+              @refresh= nil if @refresh==0
+            end
+            @status_messages= 100
             @scheduling= nil
             my_show appn.downcase
           end

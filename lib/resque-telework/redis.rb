@@ -82,14 +82,20 @@ module Resque
       # Clients (hosts) side
     
       def i_am_alive( info= {}, ttl=10 )
-        h= @HOST
         t= Time.now
         info= info.merge( { 'date' => t, 'version' => Resque::Plugins::Telework::Version } )
-        k= alive_key(h)
-        hosts_add(h)
+        k= alive_key(@HOST)
+        hosts_add(@HOST)
         Resque.redis.set(k, info.to_json )
         Resque.redis.expire(k, ttl)
-        Resque.redis.set(last_seen_key(h), t)
+        Resque.redis.set(last_seen_key(@HOST), t)
+      end
+
+      def i_am_dead
+        t= Time.now
+        hosts_add( @HOST )
+        Resque.redis.del( alive_key( @HOST ) )
+        Resque.redis.set(last_seen_key( @HOST ), t)        
       end
       
       def register_revision( h, rev, lim=9 )

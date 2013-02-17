@@ -43,6 +43,7 @@ module Resque
             send_status( 'Error', "A stop request has been received by the #{@HOST} daemon but there are still running worker(s) so it will keep running") unless @WORKERS.empty?
             @RUN_DAEMON= true
           end
+          i_am_dead
         rescue Interrupt         # Control-C
           send_status( 'Info', "Interruption for #{@HOST} daemon, exiting gracefully") if @WORKERS.empty?
           send_status( 'Error', "Interruption for #{@HOST} daemon, exiting, running workers may now unexpectedly terminate") unless @WORKERS.empty?
@@ -89,6 +90,7 @@ module Resque
             @RUN_DAEMON= false
           when 'kill_daemon'
             send_status( 'Error', "A kill request has been received, the daemon on #{@HOST} is now brutally terminating by calling exit()")
+            i_am_dead
             exit # Bye
           else
             send_status( 'Error', "Unknown command '#{cmd['command']}'" )

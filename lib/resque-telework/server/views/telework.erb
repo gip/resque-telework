@@ -95,7 +95,7 @@ $(document).ready(function() {
 	    <td><%= "#{redis.fmt_date(note['date'], true)}" %></td>
 	    <td><%= note['note'] %></td>
         <td>
-           <form id="deln" name="deln" method="post" action="/resque/telework_del_note/<%= id %>" ><input type="submit" value= "Delete" /></form>
+           <form style="margin:0px;float:center;" id="deln" name="deln" method="post" action="/resque/telework_del_note/<%= id %>" ><input type="submit" value= "Delete" /></form>
         </td>
 	</tr>
     <% end %>
@@ -169,11 +169,9 @@ $(document).ready(function() {
 	      <% end %>
 	  </td>
       <% if 'Alive'==status %>
-        <td> <table><tr><td><%= "Alive (v#{info['version']})" %></td></tr>
-	                <tr><td>
-	                	<form id="stopd" name="stopd" method="post" action="/resque/telework_stopitd/<%= host %>" ><input type="submit" value= <%="\"Stop\""%> /></form>
-	                </td></tr>
-	         </table>
+        <td> <center><%= "Alive (v#{info['version']})" %><br/><br/>
+             <form style="margin:0px;float:center;" id="stopd" name="stopd" method="post" action="/resque/telework_stopitd/<%= host %>" align="middle"><input type="submit" value= <%="\"Stop\""%> /></form></center>
+
         </td>
       <% else %>
         <td><%= status%></td>
@@ -215,7 +213,7 @@ $(document).ready(function() {
 	    <% if q=="*" %>*
 	    <% else %> <% ql= redis.queue_length(q) %>
 	    <% if ql==0 %><font color="grey"><span title="Queue is empty"><%= q %></span></font><br/>
-	    <% else %><span title="<%= "Queue has #{ql} jobs" %>" ><%= q %></span>
+	    <% else %><span title="<%= "#{ql} pending jobs" %>" ><%= q %></span>
 	    <% end %><% end %><% end %>
 	    </td><td><% if running%><%= "#{info['worker_count']}" %>
                     <% else %><select id= <%= "\"count_filter_#{id}\"" %> name="c"/>
