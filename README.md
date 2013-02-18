@@ -5,10 +5,12 @@ Resque Telework
 
 Telework depends on Resque 1.20+ and Redis 2.2+
 
+Telework 0.3 has a new auto feature that is in beta and currently under testing - please report bugs to [gip.github@gmail.com](gip.github@gmail.com)
+
 Description
 -----------
 
-Telework is a [Resque](https://github.com/defunkt/resque) plugin aimed at controlling Resque workers from the web UI. It makes it easy to manage workers on a complex systems that includes several hosts, different queue(s) and an evolving source code that is deployed several times a day. Beyond starting and stopping workers on remote hosts, the plugin makes it easy to switch between code revisions, gives a partial view of each worker's log (stdout and stderr) and maintains a status of each workers. Version 0.3 adds an auto mode that is able to start workers depending on how full a given queue (or several queues) are. The workers are shut off once all the jobs are processed.
+Telework is a [Resque](https://github.com/defunkt/resque) plugin aimed at controlling Resque workers from the web UI. It makes it easy to manage workers on a complex systems that includes several hosts, different queue(s) and an evolving source code that is deployed several times a day. Beyond starting and stopping workers on remote hosts, the plugin makes it easy to switch between code revisions, gives a partial view of each worker's log (stdout and stderr) and maintains a status of each workers. Version 0.3 adds an auto mode that is able to start workers depending on how full a given queue (or several queues) are. The workers are stopped once all the jobs are processed, allowing a better memory usage.
 
 Telework comes with three main components
 
@@ -126,10 +128,10 @@ Auto Mode
 ---------
 
 The auto mode is still under testing as of version 0.3. Starting/stopping workers in auto mode is done by the daemon using a simple heuristic. Parameters may be modified as the task page. The main parameters controlling the auto mode are
-* `Auto delay`: this is the minimum amount of time, in second, that the daemon has to wait before to make a new change to the workers (e.g. start or stop workers). A large number prevents the overhead of stopping/starting workers too often
-* `Worker count`, `Auto job per worker` and `Auto min worker`: these parameters control the ideal number of workers needed to process jobs from a given queue. Given a queue with `Q` number of pending jobs, the number of workers started by the daemon at a given time will be:
+* `Auto_delay`: this is the minimum amount of time, in second, that the daemon has to wait before to make a new change to the workers (e.g. start or stop workers). A large number prevents the overhead of stopping/starting workers too often
+* `Worker_count`, `Auto_job_per_worker` and `Auto_min_worker`: these parameters control the number of workers needed to process jobs from a given queue. Given a queue with `Q` pending jobs, the number of workers started by the daemon at a given time will be:
 
-  min( `Worker_count`, max( `Auto min worker`, ceil( `Q` / `Auto job per worker` ) ) )
+  min( `Worker_count`, max( `Auto_min_worker`, ceil( `Q` / `Auto_job_per_worker` ) ) )
 
 Known Issues
 ------------
