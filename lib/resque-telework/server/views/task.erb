@@ -13,8 +13,8 @@
 	<tr><td>Log period</td><td><input id="log_snapshot_period" name="log_snapshot_period" type="number" value="<%= "#{task['log_snapshot_period']}" %>" /></td><td>Period in second between two worker log capture</td>
 	<tr><td>Log lines</td><td><input id="log_snapshot_lines" name="log_snapshot_lines" type="number" value="<%= "#{task['log_snapshot_lines']}" %>" /></td><td>Number of lines captured at the end of the worker log</td>
 	<tr><td>Auto delay</td><td><input id="auto_delay" name="auto_delay" type="number" value="<%= "#{task['auto_delay']}" %>" /></td><td>Reaction time in second for the auto mode</td>
-	<tr><td>Job per worker</td><td><input id="auto_max_waiting_job_per_worker" name="auto_max_waiting_job_per_worker" type="number" value="<%= "#{task['auto_max_waiting_job_per_worker']}" %>" /></td><td>Max number of waiting job for earch worker in auto mode</td>
-	<tr><td>Min worker</td><td><input id="auto_worker_min" name="auto_worker_min" type="number" value="<%= "#{task['auto_worker_min']}" %>" /></td><td>Min number of worker in auto mode</td>		
+	<tr><td>Auto job per worker</td><td><input id="auto_max_waiting_job_per_worker" name="auto_max_waiting_job_per_worker" type="number" value="<%= "#{task['auto_max_waiting_job_per_worker']}" %>" /></td><td>Max number of waiting job for earch worker in auto mode</td>
+	<tr><td>Auto min worker</td><td><input id="auto_worker_min" name="auto_worker_min" type="number" value="<%= "#{task['auto_worker_min']}" %>" /></td><td>Min number of worker in auto mode</td>		
 </table>
 <input type="submit" value= "Save" />
 </form>
