@@ -212,9 +212,9 @@ $(document).ready(function() {
 	    </td><td><% for q in info['queue'].split(",") %>
 	    <% if q=="*" %>*
 	    <% else %> <% ql= redis.queue_length(q) %>
-	    <% if ql==0 %><font color="grey"><span title="Queue is empty"><%= q %></span></font><br/>
+	    <% if ql==0 %><font color="grey"><span title="Queue is empty"><%= q %></span></font>
 	    <% else %><span title="<%= "#{ql} pending jobs" %>" ><%= q %></span>
-	    <% end %><% end %><% end %>
+	    <% end %><% end %><br/><% end %>
 	    </td><td><% if running%><%= "#{info['worker_count']}" %>
                     <% else %><select id= <%= "\"count_filter_#{id}\"" %> name="c"/>
                                <% for co in (1..8).to_a %>
