@@ -126,7 +126,7 @@ Auto Mode
 ---------
 
 The auto mode is still under testing as of version 0.3. Starting/stopping workers in auto mode is done by the daemon using a simple heuristic. Parameters may be modified as the task page. The main parameters controlling the auto mode are
-* `Auto delay`: this is the minimum amount of time, in second, that the daemon has to wait before to make a new change to the workers (e.g. start or stop new workers). A large number prevents the overhead of stopping/starting workers too often
+* `Auto delay`: this is the minimum amount of time, in second, that the daemon has to wait before to make a new change to the workers (e.g. start or stop workers). A large number prevents the overhead of stopping/starting workers too often
 * `Worker count`, `Auto job per worker` and `Auto min worker`: these parameters control the ideal number of workers needed to process jobs from a given queue. Given a queue with `Q` number of pending jobs, the number of workers started by the daemon at a given time will be:
 
   min( `Worker_count`, max( `Auto min worker`, ceil( `Q` / `Auto job per worker` ) ) )

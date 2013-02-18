@@ -131,7 +131,8 @@ module Resque
               end
             end
             @task= redis.tasks_by_id( @host, @task_id )
-            all= ['log_snapshot_period', 'log_snapshot_lines', 'exec', 'auto_delay', 'auto_max_waiting_job_per_worker', 'auto_worker_min' ]
+            all= ['log_snapshot_period', 'log_snapshot_lines', 'exec', 'worker_count',
+                  'auto_delay', 'auto_max_waiting_job_per_worker', 'auto_worker_min' ]
             all.each do |a|
               @task[a]= params[a]
             end

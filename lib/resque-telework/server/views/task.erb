@@ -8,7 +8,7 @@
 	<tr><td>Mode</td><td><%= "#{task['mode']}" %></td><td>Current task mode</td>
     <tr><td>Environment</td><td><%= "#{task['rails_env']}" %></td><td>Rails environment</td>
     <tr><td>Queues</td><td><%= "#{task['queue']}" %></td><td>Queues</td>    	
-    <tr><td>Count</td><td><%= "#{task['worker_count']}" %></td><td>Max number of workers</td>   	
+    <tr><td>Worker count</td><td><input id="worker_count" name="worker_count" type="number" value="<%= "#{task['worker_count']}" %>" /></td><td>In manual mode, this is the the number of workers started when the task in on<br/>In auto mode, this is the maximum number of workers that can be started</td>   	
 	<tr><td>Exec</td><td><input id="exec" name="exec" size=60 type="text" value="<%= "#{task['exec']}" %>" /></td><td>Command to be executed to start a worker</td>
 	<tr><td>Log period</td><td><input id="log_snapshot_period" name="log_snapshot_period" type="number" value="<%= "#{task['log_snapshot_period']}" %>" /></td><td>Period in second between two worker log capture</td>
 	<tr><td>Log lines</td><td><input id="log_snapshot_lines" name="log_snapshot_lines" type="number" value="<%= "#{task['log_snapshot_lines']}" %>" /></td><td>Number of lines captured at the end of the worker log</td>
