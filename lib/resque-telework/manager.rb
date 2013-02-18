@@ -99,6 +99,11 @@ module Resque
 
         def stop_auto( auto )
           id= auto['task_id']
+          auto['worker_id'].each do |wid|
+            if @WORKERS[wid]
+              manage_worker( { 'worker_id' => wid, 'action' => 'QUIT'} )
+            end
+          end
           @AUTO.delete(auto['task_id'])
           autos_rem( @HOST, id )
           send_status( 'Info', "Task #{id} is now in manual mode")
@@ -143,10 +148,10 @@ module Resque
           @AUTO.keys.each do |id|
             auto= @AUTO[id]
             autos_add( @HOST, id, auto )
-            next unless auto['last_action']+auto['auto_delay'] <= Time.now
+            next unless auto['last_action']+auto['auto_delay'].to_i <= Time.now
             auto= status_auto( id, @AUTO[id] )  # Compute the new status..
             ql= get_queue_length( auto['queue'] )
-            ideal= [(ql.to_f / auto['max_waiting_job_per_worker'].to_f).ceil, auto['worker_min']].max
+            ideal= [(ql.to_f / auto['auto_max_waiting_job_per_worker'].to_f).ceil, auto['auto_worker_min'].to_i].max
             count= auto['worker_count'].to_i
             case ideal <=> (count-auto['worker_void'])
             when 0  # Do nothing
@@ -162,7 +167,7 @@ module Resque
 
         # Start auto session
         def start_auto( cmd0, rev_info )
-          auto_def= { 'max_waiting_job_per_worker' => 1,'worker_min' => 0, 'auto_delay' => 15 }
+          auto_def= { 'auto_max_waiting_job_per_worker' => 1,'auto_worker_min' => 0, 'auto_delay' => 15 }
           cmd= auto_def.merge( cmd0 )
           id= cmd['task_id']
           if @AUTO[id]
@@ -173,7 +178,7 @@ module Resque
           auto= cmd                       # Should be defined in cmd: task_id, worker_count, worker_id, queue, rails_env, exec
           auto['rev_info']= rev_info
           # Get status for the workers
-          auto['last_action']= Time.now - auto['auto_delay']
+          auto['last_action']= Time.now - auto['auto_delay'].to_i
           @AUTO[id]= auto       
         end
         
@@ -201,8 +206,8 @@ module Resque
           pid= spawn( env, exec, opt) # Start it!
           info= { 'pid' => pid, 'status' => 'RUN', 'environment' => env, 'options' => opt, 'revision_info' => rev_info }
           # Log snapshot
-          info['log_snapshot_period']= cmd['log_snapshot_period'] if cmd['log_snapshot_period']
-          info['log_snapshort_lines']= cmd['log_snapshot_lines'] if cmd['log_snapshot_lines']
+          info['log_snapshot_period']= cmd['log_snapshot_period'].to_i if cmd['log_snapshot_period']
+          info['log_snapshort_lines']= cmd['log_snapshot_lines'].to_i if cmd['log_snapshot_lines']
           info['mode']= auto ? 'Auto' : 'Manual'
           @WORKERS[id]= info
           workers_add( @HOST, id, info )

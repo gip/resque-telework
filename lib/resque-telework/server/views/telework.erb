@@ -207,7 +207,7 @@ $(document).ready(function() {
 	     <% status= 'Stopped' if status.blank? %>
 	     <% running= status!='Stopped' %>
 	     <% paused=  status=='Paused' %>
-             <td><%= "<a hreftbd=\"/resque/telework/task/#{host}/#{id}\">#{id}</a>" %>
+             <td><%= "<a href=\"/resque/telework/task/#{host}/#{id}\">#{id}</a>" %>
 	    </td><td><center><%= auto ? "<b>Auto</b><br/><br/>" : "" %><%= "#{status.gsub(/,/,'<br/>')}" %> </center>
 	    </td><td><% for q in info['queue'].split(",") %>
 	    <% if q=="*" %>*

@@ -38,7 +38,11 @@ module Resque
               end
               html += "</select>"
             end
-            
+            def task_default
+              { 'auto_max_waiting_job_per_worker' => 1,'auto_worker_min' => 0, 'auto_delay' => 15,
+                'log_snapshot_period' => 30, 'log_snapshot_lines' => 40, 'exec' => "bundle exec rake resque:work --trace"
+              }
+            end
           end
 
           app.get "/#{appn.downcase}" do
@@ -76,6 +80,12 @@ module Resque
             @host= params[:host]
             my_show 'worker' 
           end
+
+          app.get "/#{appn.downcase}/task/:host/:task_id" do
+            @task_id= params[:task_id]
+            @host= params[:host]
+            my_show 'task' 
+          end
           
           app.get "/#{appn.downcase}/config" do
             content_type :json
@@ -110,6 +120,23 @@ module Resque
             @kill= true
             redis.cmds_push( @host, { 'command' => 'kill_daemon' } )
             my_show 'stopit'
+          end
+
+          app.post "/#{appn.downcase}_mod_task/:task" do
+            @task_id= params[:task]
+            @host= nil
+            redis.hosts.each do |h|
+              redis.tasks(h).each do |id, info|
+                @host= h if id==@task_id # TODO: break nested loops
+              end
+            end
+            @task= redis.tasks_by_id( @host, @task_id )
+            all= ['log_snapshot_period', 'log_snapshot_lines', 'exec', 'auto_delay', 'auto_max_waiting_job_per_worker', 'auto_worker_min' ]
+            all.each do |a|
+              @task[a]= params[a]
+            end
+            redis.tasks_add( @host , @task_id, @task )
+            redirect "/resque/#{appn.downcase}"
           end
 
           app.post "/#{appn.downcase}_killit/:worker" do
@@ -149,12 +176,10 @@ module Resque
             @env= params[:e]
             @q= @qmanual.blank? ? @queue : @qmanual
             id= redis.unique_id.to_s
-            redis.tasks_add( @host , id, { 'task_id' => id, 'worker_count' => @count,
-                                           'rails_env' => @env, 'queue' => @q,
-                                           'exec' => "bundle exec rake resque:work --trace",
-                                           'worker_id' => [], 'worker_status' => 'Stopped',
-                                           'log_snapshot_period' => 30,
-                                           'log_snapshot_lines' => 40 } )
+            t= task_default
+            redis.tasks_add( @host , id, t.merge( { 'task_id' => id, 'worker_count' => @count,
+                                                    'rails_env' => @env, 'queue' => @q,
+                                                    'worker_id' => [], 'worker_status' => 'Stopped'} ) )
             redirect "/resque/#{appn.downcase}"          
           end
           
