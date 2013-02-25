@@ -4,7 +4,7 @@
 <table>
 	<tr><th>Parameter</th><th>Value</th><th>Description</th>
 	<tr><td>Hostname</td><td><%= @host %></td><td></td></tr>
-    <tr><td>Alias</td><td><input id="alias" name="alias" size=60 type="text" value="<%= "#{redis.aliases(@host)}" %>" /></td><td>Alias used in telework</td></tr>
+    <tr><td>Alias</td><td><% a= redis.aliases(@host) %><input id="alias" name="alias" size=60 type="text" value="<%= a==@host || a.blank? ? "" : "#{a}" %>" /></td><td>Alias used in telework</td></tr>
 </table>
 <input type="submit" value= "Save" />
 </form>

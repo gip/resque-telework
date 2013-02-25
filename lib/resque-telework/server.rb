@@ -138,7 +138,11 @@ module Resque
           app.post "/#{appn.downcase}_mod_host/:host" do
             host= params[:host]
             ahost= params[:alias]
-            redis.aliases_add( host, ahost )
+            if ahost.blank? || ahost==host
+              redis.aliases_rem( host )
+            else
+              redis.aliases_add( host, ahost )
+            end
             redirect "/resque/#{appn.downcase}"            
           end
 
