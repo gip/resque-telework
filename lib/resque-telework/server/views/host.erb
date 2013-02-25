@@ -1,0 +1,10 @@
+<h1>Host <%= @host %></h1>
+
+<form style="margin:0px;float:center;" id="hostm" name="hostm" method="post" action="/resque/telework_mod_host/<%= @host %>" >
+<table>
+	<tr><th>Parameter</th><th>Value</th><th>Description</th>
+	<tr><td>Hostname</td><td><%= @host %></td><td></td></tr>
+    <tr><td>Alias</td><td><input id="alias" name="alias" size=60 type="text" value="<%= "#{redis.aliases(@host)}" %>" /></td><td>Alias used in telework</td></tr>
+</table>
+<input type="submit" value= "Save" />
+</form>

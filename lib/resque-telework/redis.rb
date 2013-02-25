@@ -22,6 +22,10 @@ module Resque
       def hosts_key # Set
         "#{key_prefix}:hosts"
       end
+
+      def aliases_key # Hash
+        "#{key_prefix}:aliases"        
+      end
       
       def revisions_key( h ) # List
         "#{key_prefix}:host:#{h}:revisions"
@@ -98,7 +102,7 @@ module Resque
         Resque.redis.set(last_seen_key( @HOST ), t)        
       end
       
-      def register_revision( h, rev, lim=9 )
+      def register_revision( h, rev, lim=10 )
         k= revisions_key(h)
         Resque.redis.ltrim(k, 0, lim-1)
         rem= []
@@ -127,7 +131,15 @@ module Resque
       def hosts_add( h )
         Resque.redis.sadd(hosts_key, h)
       end
-      
+
+      def aliases_add( h, a )
+        Resque.redis.hset( aliases_key, h, a ) unless Resque.redis.hvals( aliases_key ).include?( a )
+      end
+
+      def aliases_rem( h )
+        Resque.redis.hdel( aliases_key, h )
+      end 
+
       def revisions_add( h, v )
         hosts_add(h)
         k= revisions_key(h)
@@ -334,6 +346,11 @@ module Resque
          
       def hosts
         Resque.redis.smembers(hosts_key)
+      end
+
+      def aliases( h )
+        a= Resque.redis.hget( aliases_key, h )
+        a.blank? ? h : a
       end
 
       def revisions( h, lim=30 )

@@ -30,11 +30,19 @@ module Resque
             end
             def generic_filter(id, name, list, more= "")
               html = "<select id=\"#{id}\" name=\"#{name}\" #{more}>"
-              #html += "<option value=\"\">-</option>"
               value= list[0]
               list.each do |k|
                 selected = k == value ? 'selected="selected"' : ''
                 html += "<option #{selected} value=\"#{k}\">#{k}</option>"
+              end
+              html += "</select>"
+            end
+            def generic_filter_with_dis(id, name, list, more= "")
+              html = "<select id=\"#{id}\" name=\"#{name}\" #{more}>"
+              value= list[0][0]
+              list.each do |k,dis|
+                selected = k == value ? 'selected="selected"' : ''
+                html += "<option #{selected} value=\"#{k}\">#{dis}</option>"
               end
               html += "</select>"
             end
@@ -86,6 +94,11 @@ module Resque
             @host= params[:host]
             my_show 'task' 
           end
+
+          app.get "/#{appn.downcase}/host/:host" do
+            @host= params[:host]
+            my_show 'host' 
+          end
           
           app.get "/#{appn.downcase}/config" do
             content_type :json
@@ -120,6 +133,13 @@ module Resque
             @kill= true
             redis.cmds_push( @host, { 'command' => 'kill_daemon' } )
             my_show 'stopit'
+          end
+
+          app.post "/#{appn.downcase}_mod_host/:host" do
+            host= params[:host]
+            ahost= params[:alias]
+            redis.aliases_add( host, ahost )
+            redirect "/resque/#{appn.downcase}"            
           end
 
           app.post "/#{appn.downcase}_mod_task/:task" do

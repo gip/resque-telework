@@ -103,6 +103,8 @@ $(document).ready(function() {
 <br>
 <% end %>
 
+<% hosts= redis.hosts %>
+
 <% if @scheduling %>
 
 <h1>Starting Workers</h1>
@@ -112,7 +114,7 @@ $(document).ready(function() {
   <div class="control_panel sub_header">
     <form id="startform" name="startform" method="post" action="/resque/telework/start_task" >
       <span class="host_filter">
-        Host: <%= generic_filter("host_filter", "h", redis.hosts, 
+        Host: <%= generic_filter_with_dis("host_filter", "h", hosts.zip( hosts.map{ |h| redis.aliases(h) } ), 
                                  "onchange=\"javascript: hostlist(this.options[this.selectedIndex].value);\"") %>
       </span>
       <span class="queue_filter">
@@ -163,7 +165,10 @@ $(document).ready(function() {
     </tr>
     <% for host, status, info in redis.daemons_state %>
       <tr>
-      <td><center><%= host%>
+      <td><center><% ahost = redis.aliases(host) %>
+      	  <a href=<%= "/resque/telework/host/#{host}" %> >
+      	  <% if ahost!=host %> <%= ahost %> <% else %>
+      	  <%= host %> <% end %></a>
 	      <% if 'Alive'==status && info['cpu_load_1mins'] %>
 	         <br><%= "(%.2f%% cpu)" % (100*info['cpu_load_1mins']) %></center>
 	      <% end %>
