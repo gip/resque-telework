@@ -153,7 +153,7 @@ $(document).ready(function() {
 <h1>Hosts, Revisions, Tasks and Workers</h1>
 <form id="stopping_all" name="stopping_all" method="post" action="/resque/telework/stop_all">
 	<%= generic_filter("mode_filter", "m", ["Stop", "Kill"]) %>
-	 all workers on host <%= generic_filter("host_filter", "h", redis.hosts <<  "[All hosts]") %>
+	 all workers on host <%= generic_filter_with_dis("host_filter", "h", hosts.zip( hosts.map{ |h| redis.aliases(h) } ) <<  ["[All hosts]", "[All hosts]"]) %>
 	<span class="stopping_all_submit"><input type="submit" value="Go"/></span>
 </form></br>
 <table>
@@ -261,7 +261,7 @@ $(document).ready(function() {
 </br>
 <form id="stopping_all" name="stopping_all" method="post" action="/resque/telework/stop_all">
 	<%= generic_filter("mode_filter", "m", ["Stop", "Kill"]) %>
-	 all workers on host <%= generic_filter("host_filter", "h", redis.hosts <<  "[All hosts]") %>
+    all workers on host <%= generic_filter_with_dis("host_filter", "h", hosts.zip( hosts.map{ |h| redis.aliases(h) } ) <<  ["[All hosts]", "[All hosts]"]) %>	 
 	<span class="stopping_all_submit"><input type="submit" value="Go"/></span>
 </form></br></br>
 
