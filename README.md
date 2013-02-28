@@ -22,6 +22,17 @@ Note that currently (Telework 0.3), the daemon process is included in the main a
 
 Telework has been successfully used in production at Entelo for more that a year with up to 10 servers.
 
+Gems
+----
+
+Version 0.3.1
+* Host aliases and comments (aliases come handy when hostnames cannot be chosen or changing them is too cumbersome - AWS comes to mind)
+
+Version 0.3.0
+* Auto mode for workers
+* Updated window layout
+
+
 Overview of the WebUI
 ---------------------
 
