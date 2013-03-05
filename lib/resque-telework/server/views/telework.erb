@@ -170,7 +170,7 @@ $(document).ready(function() {
       	  <% if ahost!=host %><%= ahost %><% else %>
       	  <%= host %><% end %></a>
 	      <% if 'Alive'==status && info['cpu_load_1mins'] %><br/><%= "(%.2f%% cpu)" % (100*info['cpu_load_1mins']) %><% end %>
-	      <% if 'Alive'==status && info['load_avg_1mins'] %><br/><%= "(%.2f%% load)" % (info['load_avg_1mins'].to_i) %><% end %>
+	      <% if 'Alive'==status && info['load_avg_1mins'] %><br/><%= "(%.2f% load)" % (info['load_avg_1mins'].to_i) %><% end %>
 	      <% if 'Alive'==status && info['mem_total'] && info['mem_free'] %>
 	      	       <br/><%= "(%.2f%% mem)" % (100*info['mem_free'].to_i/info['mem_total'].to_i) %><% end %>
 	     </center>
