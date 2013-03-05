@@ -5,6 +5,8 @@ Resque Telework
 
 Telework depends on Resque 1.20+ and Redis 2.2+
 
+A native daemon in Haskell is also available at [github.com/gip/resque-telework-daemon-hs](https://github.com/gip/resque-telework-daemon-hs) to have acceptable resource (CPU/memory) utilization.
+
 Telework 0.3 has a new auto feature that is in beta and currently under testing - please report bugs to [gip.github@gmail.com](gip.github@gmail.com)
 
 Description
