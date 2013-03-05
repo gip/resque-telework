@@ -32,6 +32,11 @@ Version 0.3.0
 * Auto mode for workers
 * Updated window layout
 
+Native Daemon
+-------------
+
+The reference daemon is implemented in Ruby. This is however very inefficient since the full Rails environment needs to be loaded, which can take up to 160MB of memory. Running in Ruby without Rails still takes a significant amount of memory. [github.com/gip/resque-telework-daemon-hs](https://github.com/gip/resque-telework-daemon-hs) is a lightweight daemon written in Haskell. It compiles to native code gives largely improved performance both in term of CPU load and memory usage (less than 5MB).
+
 
 Overview of the WebUI
 ---------------------
