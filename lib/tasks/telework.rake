@@ -31,6 +31,14 @@ namespace :telework do
         $stderr.reopen(lf)
       end
       Process.setsid      # I'm grown up now
+      
+      # New Redis connection after fork
+      ns = Resque.redis.namespace
+      redis_host = Resque.redis.client.host
+      redis_port = Resque.redis.client.port
+      Resque.redis = Redis.new(:host => redis_host, :port => redis_port)
+      Resque.redis.namespace = ns
+
       daemon.start        # Start the daemon
       File.delete(lpid)   # Delete the pid file
     end
