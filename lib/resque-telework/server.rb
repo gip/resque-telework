@@ -204,12 +204,12 @@ module Resque
             @qmanual= params[:qmanual]
             @count= params[:c]
             #@rev= params[:r].split(' ')
-            @env= params[:e]
+            @envv= params[:e]
             @q= @qmanual.blank? ? @queue : @qmanual
             id= redis.unique_id.to_s
             t= task_default
             redis.tasks_add( @host , id, t.merge( { 'task_id' => id, 'worker_count' => @count,
-                                                    'rails_env' => @env, 'queue' => @q,
+                                                    'rails_env' => @envv, 'queue' => @q,
                                                     'worker_id' => [], 'worker_status' => 'Stopped'} ) )
             redirect "/resque/#{appn.downcase}"          
           end
