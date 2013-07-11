@@ -9,3 +9,9 @@
 </table>
 <input type="submit" value= "Save" />
 </form>
+<br/>
+<h1>Delete Host <%= @host %></h1>
+This will delete all the entries for the host - use with caution!
+<form style="margin:0px;float:center;" id="delm" name="delm" method="post" action="/resque/telework_del_host/<%= @host %>" >
+<br/><input type="submit" value="Delete" />
+<form>

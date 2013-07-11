@@ -135,6 +135,12 @@ module Resque
             my_show 'stopit'
           end
 
+          app.post "/#{appn.downcase}_del_host/:host" do
+            host= params[:host]
+            redis.hosts_rem( host )
+            redirect "/resque/#{appn.downcase}"            
+          end          
+
           app.post "/#{appn.downcase}_mod_host/:host" do
             host= params[:host]
             ahost= params[:alias]
