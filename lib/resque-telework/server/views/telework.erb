@@ -78,6 +78,14 @@ $(document).ready(function() {
 
 <% redis.reconcile %>
 
+<% unless @dont_show_refresh %>
+<% if @refresh %>
+<a style="float:right;" href="Overview">Stop auto-refresh</a>
+<% else %>
+<a style="float:right;" href="Overview?refresh=20">Start auto-refresh</a>
+<% end %>
+<% end %>
+
 <% notes= redis.notes_pop %>
 <% if notes.length>0 %>
 
@@ -110,44 +118,56 @@ $(document).ready(function() {
 <h1>Starting Workers</h1>
 <br>
 
-<div class="clearfix">
-  <div class="control_panel sub_header">
-    <form id="startform" name="startform" method="post" action="/resque/telework/start_task" >
-      <span class="host_filter">
-        Host: <%= generic_filter_with_dis("host_filter", "h", hosts.zip( hosts.map{ |h| redis.aliases(h) } ), 
+<form style="float:left;" id="startform" name="startform" method="post" action="/resque/telework/start_task" >
+<table>
+	<tr>
+		<th>Host</th>
+		<th>Queue(s)</th>
+		<th>Count</th>
+        <th>Environment</th>
+	</tr>
+
+    <tr>
+	    <td><%= generic_filter_with_dis("host_filter", "h", hosts.zip( hosts.map{ |h| redis.aliases(h) } ), 
                                  "onchange=\"javascript: hostlist(this.options[this.selectedIndex].value);\"") %>
-      </span>
-      <span class="queue_filter">
-        Queue: <%= generic_filter("queue_filter", "q", ["(other)"] + Resque.redis.smembers('queues').sort << "*",
+	    </td>
+	    <td><%= generic_filter("queue_filter", "q", ["(other)"] + Resque.redis.smembers('queues').sort << "*",
                                   "onchange=\"javascript: queuelist(this.options[this.selectedIndex].value);\"") %>
-        Queue: <input id="queue_text" type="text" name="qmanual" onkeyup="javascript: queuetext(this.value);" />
-      </span>
-      <span class="count_filter">
-        Count: <%= generic_filter("count_filter", "c", ['1', '2', '3', '4', '5', '6', '7', '8'] ) %>
-      </span>
-	  <span class="env_filter">
-	    Environment: <%= generic_filter("env_filter", "e", ['(default)', 'production', 'staging', 'development', 'test'] ) %>
-		</select>
-	  </span>
-      <input type="submit" value="Start" />
+             <input id="queue_text" type="text" name="qmanual" onkeyup="javascript: queuetext(this.value);" />
+	    </td>
+	    <td><%= generic_filter("count_filter", "c", ['1', '2', '3', '4', '5', '6', '7', '8'] ) %>
+	    </td>
+        <td><%= generic_filter("env_filter", "e", ['(default)', 'production', 'staging', 'development', 'test'] ) %>
+        </td>
+        <td><input type="submit" value="Start" /></td>
+	</tr>
+</table>
     </form>
-  </div>
-</div><br><br><br><br>
+<br/><br/><br/><br/><br/><br/>
 <% end %>
 
 <br>
 <% if @scheduling %>
 <h1>Adding Notes</h1>
 <br>
-<div class="clearfix">
-  <div class="control_panel sub_header">
-   <form id="noting" name="noting" method="post" action="/resque/telework/add_note">
-	<span class="note_user">User<input id="note_user" type="text" name="note_user"/></span>
-	<span class="note_text">Note<input id="note_text" type="text" size="100" name="note_text"/></span>
-	<span class="note_submit"><input type="submit" value="Add"/></span>
-   </form>
-   </div></div>
-<br><br><br><br>
+
+
+<form style="float:left;" id="noting" name="noting" method="post" action="/resque/telework/add_note">
+<table>
+	<tr>
+		<th>User</th>
+		<th>Note</th>
+	</tr>
+
+    <tr>
+	    <td><input id="note_user" type="text" name="note_user"/></td>
+	    <td><input id="note_text" type="text" size="100" name="note_text"/></td>
+	    <td><input type="submit" value="Add"/></td>
+</table>	    	    
+</form>
+
+
+<br><br><br><br><br><br>
 <% end %>
 
 <h1>Hosts, Revisions, Tasks and Workers</h1>

@@ -39,7 +39,7 @@ module Resque
             end
             def generic_filter_with_dis(id, name, list, more= "")
               html = "<select id=\"#{id}\" name=\"#{name}\" #{more}>"
-              value= list[0][0]
+              value= list[0][0] if list[0]
               list.each do |k,dis|
                 selected = k == value ? 'selected="selected"' : ''
                 html += "<option #{selected} value=\"#{k}\">#{dis}</option>"
@@ -58,7 +58,7 @@ module Resque
           end
           
           app.get "/#{appn.downcase}/Overview" do
-            @refresh= 10
+            @refresh= nil
             if params[:refresh]
               @refresh= params[:refresh].to_i
               @refresh= nil if @refresh==0
@@ -69,6 +69,7 @@ module Resque
           end
 
           app.get "/#{appn.downcase}/Start" do
+            @dont_show_refresh= true
             @status_messages= 100
             @scheduling= true
             my_show appn.downcase
