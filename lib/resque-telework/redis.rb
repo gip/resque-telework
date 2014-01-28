@@ -74,6 +74,14 @@ module Resque
       def notes_key # List
         "#{key_prefix}:notes"
       end
+
+      def stats_key( t ) # Hash
+        "#{key_prefix}:stats:time:#{t}"
+      end
+
+      def stats_subkey( q, h, e ) # Queue, host and event
+         "#{q}:#{h}:#{e}"
+      end
   
       # Checks
       def check_redis
@@ -214,6 +222,13 @@ module Resque
         Resque.redis.ltrim(status_key, 0, lim-1)
       end
       
+      def stats_inc( h, q, e )
+        t= Time.now.to_i / STATS_RESOLUTION
+        k= stats_key(t)
+        Resque.redis.hincrby(k, stats_subkey(q, h, e), 1)
+        Resque.redis.expire(k, 3600*25)
+      end
+
       # Server side
       
       def daemons_state( clean = 30000000 )
@@ -286,6 +301,29 @@ module Resque
             end
           end
         end
+      end
+
+      def stats
+        st= {}
+        t0= Time.now.to_i / STATS_RESOLUTION
+        ((t0-24*60) .. t0).each do |t|
+          k= stats_key(t)
+          ts= t*STATS_RESOLUTION
+          Resque.redis.hgetall(k).each do |sk,count|
+            puts "#{sk} #{count}"
+            q, h, e= sk.split(":")            
+            st[q]= {} unless st[q]
+            [:all, h].each do |hh|
+              st[q][hh]||= {}
+              st[q][hh][e]||= {}
+              st[q][hh][e][ts]||= 0
+              st[q][hh][e][:all]||= 0
+              st[q][hh][e][ts]+= count.to_i
+              st[q][hh][e][:all]+= count.to_i
+            end
+          end
+        end
+        st
       end
       
       def workers( h )

@@ -18,7 +18,7 @@ module Resque
               @@myredis
             end
             def my_substabs
-              ["Overview", "Start", "Misc"]
+              ["Overview", "Start", "Stats", "Misc"]
             end
             def my_show(page, layout = true)
               response["Cache-Control"] = "max-age=0, private, must-revalidate"
@@ -78,6 +78,10 @@ module Resque
           app.get "/#{appn.downcase}/Misc" do
             my_show 'misc'
           end          
+
+          app.get "/#{appn.downcase}/Stats" do
+            my_show 'stats'
+          end 
           
           app.get "/#{appn.downcase}/revision/:revision" do
             @revision= params[:revision]

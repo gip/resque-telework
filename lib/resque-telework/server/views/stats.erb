@@ -1,0 +1,37 @@
+<% @subtabs= my_substabs %>
+
+<% stats= redis.stats %>
+
+<h1>Stats</h1>
+<table>
+	<tr>
+		<th>Queue</th>
+		<th>Total processed (last hour)</th>
+		<th>Total processes (last day)</th>
+		<th>Action</th>
+	</tr>
+    <% for q in stats.each_key %>
+    <% tnow= Time.now %>
+    <% t1h= {} %>
+    <% t24h= {} %>
+    <% for h in stats[q].each_key %>
+      <% t1h[h]= 0 %>
+      <% t24h[h]= 0 %>
+      <% for t in stats[q][:all]["started"].each_key %>
+        <% next if t==:all %>
+        <% t1h[h]+= stats[q][:all]["started"][t] if Time.at(t.to_i)+1.hour >= tnow %>
+        <% t24h[h]+= stats[q][:all]["started"][t] if Time.at(t.to_i)+24.hour >= tnow %>
+      <% end %>
+    <% end %>
+    <tr>
+	    <td><%= q %></td>
+	    <td><%= t1h[:all] %></td>
+	    <td><%= t24h[:all] %></td>
+	    <td>
+           <form style="margin:0px;float:center;" id="stats" name="stats" method="get" action="/resque/telework/Overview" ><input type="submit" value= "Graph it" /></form>
+	    </td>
+	</tr>
+    <% end %>
+</table>
+<br>
+
