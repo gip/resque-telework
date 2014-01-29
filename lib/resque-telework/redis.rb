@@ -450,6 +450,15 @@ module Resque
           "(unknown date)"
         end
       end
+
+      def inc_or_set(a, i, v)
+        a||= []
+        if(a[i])
+          a[i]+= v
+        else
+          a[i]= v
+        end
+      end
       
       def text_to_html(s)
         return "" unless s

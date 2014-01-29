@@ -1,6 +1,43 @@
 <% @subtabs= my_substabs %>
 
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<script>
+    $jq1110 = jQuery.noConflict();
+</script>
+
+<script src="http://benpickles.github.io/peity/jquery.peity.min.js"></script>
+<script>
+$jq1110(function() {
+  $jq1110(".line").peity("line")
+  $jq1110(".bar").peity("bar")
+})
+</script>
+
 <% stats= redis.stats %>
+	<% succ= {} %>
+	<% fail= {} %>
+    <% intervals= [600, 3600, 24*3600] %>
+    <% tnow= Time.now %>    
+    <% for int in intervals %>
+      <% succ[int]= {} %>
+      <% fail[int]= {} %>      
+      <% for q in stats.each_key %>
+        <% succ[int][q]= {} %>
+        <% fail[int][q]= {} %>
+        <% for h in stats[q].each_key %>
+          <% succ[int][q][h]= [] %>
+          <% fail[int][q][h]= [] %>
+          <% for t in stats[q][:all]["started"].each_key %>
+            <% next if t==:all %>
+            <% puts ">" %>
+            <% redis.inc_or_set( succ[int][q][h], (Time.now.to_i-t)/int, stats[q][:all]["started"][t] ) %>
+            <% puts "<" %>
+          <% end %>
+        <% end %>    
+    <% end %>
+  <% end %>
+
+
 
 <h1>Stats</h1>
 <table>
@@ -10,23 +47,18 @@
 		<th>Total processes (last day)</th>
 		<th>Action</th>
 	</tr>
-    <% for q in stats.each_key %>
-    <% tnow= Time.now %>
-    <% t1h= {} %>
-    <% t24h= {} %>
-    <% for h in stats[q].each_key %>
-      <% t1h[h]= 0 %>
-      <% t24h[h]= 0 %>
-      <% for t in stats[q][:all]["started"].each_key %>
-        <% next if t==:all %>
-        <% t1h[h]+= stats[q][:all]["started"][t] if Time.at(t.to_i)+1.hour >= tnow %>
-        <% t24h[h]+= stats[q][:all]["started"][t] if Time.at(t.to_i)+24.hour >= tnow %>
-      <% end %>
-    <% end %>
+      <% for q in stats.each_key %>
     <tr>
 	    <td><%= q %></td>
-	    <td><%= t1h[:all] %></td>
-	    <td><%= t24h[:all] %></td>
+	    <td>
+	    	<% int= 3600 %>
+	    	<%= succ[int][q][:all][0].to_i==0 ? "None" : "#{succ[3600][q][:all][0]} (%.0f%% failed)" % (100*fail[int][q][:all][0].to_i/succ[int][q][:all][0].to_i) %> 
+	        <span class="bar"><%= succ[600][q][:all][0..6].map{ |v| v.to_i } * "," %></span>
+	     </td>
+	    <td>
+            <% int= 24*3600 %>
+	    	<%= succ[int][q][:all][0].to_i==0 ? "None" : "#{succ[3600][q][:all][0]} (%.0f%% failed)" % (100*fail[int][q][:all][0].to_i/succ[int][q][:all][0].to_i) %> 
+	        <span class="bar"><%= succ[3600][q][:all][0..24].map{ |v| v.to_i } * "," %></span></td>
 	    <td>
            <form style="margin:0px;float:center;" id="stats" name="stats" method="get" action="/resque/telework/Overview" ><input type="submit" value= "Graph it" /></form>
 	    </td>
