@@ -1,11 +1,11 @@
 <% @subtabs= my_substabs %>
 
-<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.0.min.js"></script>
 <script>
     $jq1110 = jQuery.noConflict();
 </script>
 
-<script src="http://benpickles.github.io/peity/jquery.peity.min.js"></script>
+<script src="/resque/telework/public/jquery.peity.min.js"></script>
 <script>
 $jq1110(function() {
   $jq1110(".line").peity("line")
@@ -29,9 +29,7 @@ $jq1110(function() {
           <% fail[int][q][h]= [] %>
           <% for t in stats[q][:all]["started"].each_key %>
             <% next if t==:all %>
-            <% puts ">" %>
             <% redis.inc_or_set( succ[int][q][h], (Time.now.to_i-t)/int, stats[q][:all]["started"][t] ) %>
-            <% puts "<" %>
           <% end %>
         <% end %>    
     <% end %>

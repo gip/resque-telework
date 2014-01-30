@@ -10,7 +10,12 @@ module Resque
                         
         def self.registered( app )
           appn= 'Telework'
-          
+
+          # Can't set public_folder as it would overwrite the resque one
+          app.get "/#{appn.downcase}/public/:file" do
+            send_file(File.join(PUBLIC_PATH, params[:file]), :disposition => 'inline')
+          end
+
           # This helpers adds stuff to the app closure
           app.helpers do
             @@myredis= TeleworkRedis.new
@@ -329,7 +334,6 @@ module Resque
             redirect "/resque/#{appn.downcase}"
           end
 
-                              
           app.tabs << appn
           
         end
