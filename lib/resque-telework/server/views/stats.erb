@@ -50,13 +50,13 @@ $jq1110(function() {
 	    <td><%= q %></td>
 	    <td>
 	    	<% int= 3600 %>
-	    	<%= succ[int][q][:all][0].to_i==0 ? "None" : "#{succ[3600][q][:all][0]} (%.0f%% failed)" % (100*fail[int][q][:all][0].to_i/succ[int][q][:all][0].to_i) %> 
-	        <span class="bar"><%= succ[600][q][:all][0..6].map{ |v| v.to_i } * "," %></span>
+	    	<%= succ[int][q][:all][0].to_i==0 ? "None" : "#{succ[int][q][:all][0]} (%.0f%% failed)" % (100*fail[int][q][:all][0].to_i/succ[int][q][:all][0].to_i) %> 
+	        <span class="bar"><%= succ[600][q][:all][0..5].map{ |v| v.to_i } * "," %></span>
 	     </td>
 	    <td>
             <% int= 24*3600 %>
-	    	<%= succ[int][q][:all][0].to_i==0 ? "None" : "#{succ[3600][q][:all][0]} (%.0f%% failed)" % (100*fail[int][q][:all][0].to_i/succ[int][q][:all][0].to_i) %> 
-	        <span class="bar"><%= succ[3600][q][:all][0..24].map{ |v| v.to_i } * "," %></span></td>
+	    	<%= succ[int][q][:all][0].to_i==0 ? "None" : "#{succ[int][q][:all][0]} (%.0f%% failed)" % (100*fail[int][q][:all][0].to_i/succ[int][q][:all][0].to_i) %> 
+	        <span class="bar"><%= succ[3600][q][:all][0..23].map{ |v| v.to_i } * "," %></span></td>
 	    <td>
            <form style="margin:0px;float:center;" id="stats" name="stats" method="get" action="/resque/telework/Overview" ><input type="submit" value= "Graph it" /></form>
 	    </td>
