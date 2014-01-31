@@ -30,6 +30,7 @@ $jq1110(function() {
           <% for t in stats[q][:all]["started"].each_key %>
             <% next if t==:all %>
             <% redis.inc_or_set( succ[int][q][h], (Time.now.to_i-t)/int, stats[q][:all]["started"][t] ) %>
+            <% redis.inc_or_set( fail[int][q][h], (Time.now.to_i-t)/int, stats[q][:all]["failed"][t] ) %>
           <% end %>
         <% end %>    
     <% end %>
