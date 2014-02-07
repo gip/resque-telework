@@ -12,10 +12,20 @@ module Resque
           @WORKERS= {}
           @STOPPED= []
           @AUTO= {}
+          @TORESTART= {}
+          @RRESTART= false  # Rolling restart
+          @QUITTING= false
         end
         
         # The manager (e.g. daemon) main loop
         def start
+          Signal.trap("USR1") do
+            @RRESTART= true
+          end
+          Signal.trap("USR2") do
+            @RRESTART= true
+            @QUITTING= true
+          end
           send_status( 'Info', "Daemon (PID #{Process.pid}) starting on host #{@HOST}" )
           unless check_redis # Check the Redis interface version
            err= "Telework: Error: Redis interface version mismatch, exiting"
@@ -27,17 +37,21 @@ module Resque
             send_status( 'Error', "This daemon (PID #{Process.pid}) cannot be started and will terminare now")
             exit
           end
-          loop do                                # The main loop
-            while @RUN_DAEMON do                 # If there is no request to stop
-              i_am_alive(health_info)            # Notify the system that the daemon is alive
-              check_processes                    # Check the status of the child processes (to catch zombies)
-              while cmd= cmds_pop( @HOST ) do    # Pop a command in the command queue
-                do_command(cmd)                  # Execute it
+          loop do                                     # The main loop
+            while @RUN_DAEMON do                      # If there is no request to stop
+              i_am_alive(health_info)                 # Notify the system that the daemon is alive
+              restart_workers_on_latest if @RRESTART  # Rolling restart
+              check_status
+              check_processes                         # Check the status of the child processes (to catch zombies)
+              unless @QUITTING
+                while cmd= cmds_pop( @HOST ) do       # Pop a command in the command queue
+                  do_command(cmd)                     # Execute it
+                end
               end
-              check_auto                         # Deal with the task in auto mode
-              sleep @SLEEP                       # Sleep
+              check_auto                              # Deal with the task in auto mode
+              sleep @SLEEP                            # Sleep
             end
-                                                 # A stop request has been received
+            # A stop request has been received
             send_status( 'Info', "A stop request has been received and the #{@HOST} daemon will now terminate") if @WORKERS.empty?
             break if @WORKERS.empty?
             send_status( 'Error', "A stop request has been received by the #{@HOST} daemon but there are still running worker(s) so it will keep running") unless @WORKERS.empty?
@@ -56,6 +70,10 @@ module Resque
           send_status( 'Error', "Exception should not be raised in the #{@HOST} daemon, please submit a bug report")
         end
         
+        def check_status
+          @RUN_DAEMON= false if @QUITTING && @WORKERS.empty?
+        end
+
         # Health info
         def health_info
           require "sys/cpu"
@@ -88,6 +106,8 @@ module Resque
             stop_auto( cmd )
           when 'stop_daemon'
             @RUN_DAEMON= false
+          when 'restart_workers_latest_revision'
+            @RRESTART= true
           when 'kill_daemon'
             send_status( 'Error', "A kill request has been received, the daemon on #{@HOST} is now brutally terminating by calling exit()")
             i_am_dead
@@ -204,7 +224,8 @@ module Resque
                  :unsetenv_others => false }
           exec= cmd['exec']
           pid= spawn( env, exec, opt) # Start it!
-          info= { 'pid' => pid, 'status' => 'RUN', 'environment' => env, 'options' => opt, 'revision_info' => rev_info }
+          info= { 'pid' => pid, 'status' => 'RUN', 'environment' => env, 'options' => opt, 
+                  'revision_info' => rev_info, 'cmd' => cmd }
           # Log snapshot
           info['log_snapshot_period']= cmd['log_snapshot_period'].to_i if cmd['log_snapshot_period']
           info['log_snapshort_lines']= cmd['log_snapshot_lines'].to_i if cmd['log_snapshot_lines']
@@ -222,6 +243,21 @@ module Resque
           intro+= "\n# Telework: PID is: #{pid}"
           intro+= "\n"
           File.open("#{log_path}/telework_#{id}.log", 'w') { |f| f.write(intro) }
+        end
+
+        # Rolling restart workers on latest revision
+        def restart_workers_on_latest
+          send_status( 'Info', "Stop and restart all running workers on latest revision")
+          @WORKERS.keys.each do |id|
+            info= @WORKERS[id]
+            if info['status']=='RUN'  # WIP
+              cmd= info['cmd'].clone
+              cmd['revision']= '_latest'
+              @TORESTART[id]= cmd
+              manage_worker( { 'worker_id' => id, 'action' => 'QUIT' } )
+            end
+          end
+          @RRESTART= false
         end
 
         def manage_worker ( cmd )
@@ -263,6 +299,11 @@ module Resque
                 @STOPPED.delete(id)
               end
               @WORKERS.delete(id)
+              if @TORESTART[id]
+                cmd= @TORESTART[id]
+                cmds_push( @HOST, cmd )
+                @TORESTART.delete(id)
+              end
             else
               update_log_snapshot(id)
               workers_add( @HOST, id, @WORKERS[id] )

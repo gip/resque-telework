@@ -134,6 +134,8 @@ module Resque
       end
       
       def find_revision( rev )
+        puts "Revision #{rev}"
+        return revisions(@HOST)[0] if rev=='_latest'
         revisions(@HOST).each do |r|
           return r if rev==r['revision']
         end
