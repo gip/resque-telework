@@ -79,12 +79,14 @@ $(document).ready(function() {
 <% redis.reconcile %>
 
 <% unless @dont_show_refresh %>
-<a style="float:right;" href="Overview">Refresh now</a>
-<% if @refresh %>
-<a style="float:right;" href="Overview">Stop auto-refresh</a>
-<% else %>
-<a style="float:right;" href="Overview?refresh=20">Start auto-refresh</a>
-<% end %>
+<div style="float:right;">
+    <a href="Overview">Refresh now</a>	&nbsp;&nbsp;&nbsp;
+  <% if @refresh %>
+    <a href="Overview">Stop auto-refresh</a>
+  <% else %>
+    <a href="Overview?refresh=20">Start auto-refresh</a>
+  <% end %>
+</div>
 <% end %>
 
 <% notes= redis.notes_pop %>
