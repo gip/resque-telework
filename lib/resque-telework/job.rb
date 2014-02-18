@@ -26,9 +26,9 @@ module Resque
 
         def on_failure_stats(e, *args)
           puts "on_failure_stats()"
+          puts "Exception #{e}"
           puts "host is #{@host}"        	
           stats_inc( @host, @queue, 'failed' )
-          raise e
         end
 
       end
