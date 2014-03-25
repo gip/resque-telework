@@ -248,6 +248,9 @@ module Resque
           intro+= "\n# Telework: PID is: #{pid}"
           intro+= "\n"
           File.open("#{log_path}/telework_#{id}.log", 'w') { |f| f.write(intro) }
+        rescue Exception => e
+          send_status( 'Error', "Exception when spawning worker #{cmd['worker_id']}" )
+          send_status( 'Error', "Exception #{e.message}")
         end
 
         # Rolling restart workers on latest revision
