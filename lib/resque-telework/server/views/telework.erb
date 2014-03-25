@@ -198,10 +198,9 @@ $(document).ready(function() {
 	      	       <br/><%= "(%.2f%% mem)" % (100*(1-info['mem_free'].to_f/info['mem_total'].to_f)) %><% end %>
 	     </center>
 	  </td>
-      <% if 'Alive'==status %>
-        <td> <center><%= "Alive (v#{info['version']})" %><br/><br/>
+      <% if 'Alive'==status || 'Restarting'==status || 'Quitting'==status %>
+        <td> <center><%= "#{status} (v#{info['version']})" %><br/><br/>
              <form style="margin:0px;float:center;" id="stopd" name="stopd" method="post" action="/resque/telework_stopitd/<%= host %>" align="middle"><input type="submit" value= <%="\"Stop\""%> /></form></center>
-
         </td>
       <% else %>
         <td><%= status%></td>

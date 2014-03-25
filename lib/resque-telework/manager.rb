@@ -39,7 +39,9 @@ module Resque
           end
           loop do                                     # The main loop
             while @RUN_DAEMON do                      # If there is no request to stop
-              i_am_alive(health_info)                 # Notify the system that the daemon is alive
+              i_am_alive(@QUITTING, 
+                         @TORESTART.empty?, 
+                         health_info)                 # Notify the system that the daemon is alive
               restart_workers_on_latest if @RRESTART  # Rolling restart
               check_status
               check_processes                         # Check the status of the child processes (to catch zombies)
@@ -106,8 +108,11 @@ module Resque
             stop_auto( cmd )
           when 'stop_daemon'
             @RUN_DAEMON= false
-          when 'restart_workers_latest_revision'
+          when 'restart_workers_on_latest_revision'              # Rolling restart on same daemon
             @RRESTART= true
+          when 'restart_workers_on_latest_revision_and_quit'     # Shutdown daemon and restart on another one
+            @RRESTART= true
+            @QUITTING= true            
           when 'kill_daemon'
             send_status( 'Error', "A kill request has been received, the daemon on #{@HOST} is now brutally terminating by calling exit()")
             i_am_dead
@@ -252,7 +257,11 @@ module Resque
             info= @WORKERS[id]
             if info['status']=='RUN'  # WIP
               cmd= info['cmd'].clone
-              cmd['revision']= '_latest'
+              #cmd['revision']= '_latest'
+              #cmd['revision_small'] = '_latest'
+              rev = find_revision( '_latest' )
+              cmd['revision']= rev['revision']
+              cmd['revision_small']= rev['revision_small']
               @TORESTART[id]= cmd
               manage_worker( { 'worker_id' => id, 'action' => 'QUIT' } )
             end

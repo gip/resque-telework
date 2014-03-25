@@ -97,9 +97,11 @@ module Resque
         
       # Clients (hosts) side
     
-      def i_am_alive( info= {}, ttl=10 )
+      def i_am_alive( quitting, restarting, info= {}, ttl=10 )
         t= Time.now
-        info= info.merge( { 'date' => t, 'version' => Resque::Plugins::Telework::Version } )
+        info= info.merge( { 'status' => restarting ? 'RESTART' : (quitting ? 'QUIT' : 'RUN'), 
+                            'date' => t, 
+                            'version' => Resque::Plugins::Telework::Version } )
         k= alive_key(@HOST)
         hosts_add(@HOST)
         Resque.redis.set(k, info.to_json )
@@ -239,8 +241,16 @@ module Resque
         unknown= []
         hosts.each do |h|
           life= is_alive(h)
-          alive << [h, "Alive", life]  if life
-          unless life
+          if life
+            st= 'Alive'
+            case life['status']
+            when "QUIT"
+              st= 'Quitting'
+            when "RESTART"
+              st= 'Restarting'
+            end
+            alive << [h, st, life]
+          else
             ls= last_seen(h)
             dead << [h, "Last seen #{fmt_date(ls, true)}", {} ] if ls
             unknown << [h, 'Unknown', {} ] unless ls
@@ -419,7 +429,9 @@ module Resque
         v= Resque.redis.get(alive_key(h))
         return nil unless v
         begin
-          ActiveSupport::JSON.decode(v)
+          info= ActiveSupport::JSON.decode(v)
+          return nil if info && info['status'] && info['status']=='QUIT'
+          info
         rescue
           {}
         end
