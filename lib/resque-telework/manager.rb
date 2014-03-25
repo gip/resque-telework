@@ -40,7 +40,7 @@ module Resque
           loop do                                     # The main loop
             while @RUN_DAEMON do                      # If there is no request to stop
               i_am_alive(@QUITTING, 
-                         @TORESTART.empty?, 
+                         @TORESTART.any?, 
                          health_info)                 # Notify the system that the daemon is alive
               restart_workers_on_latest if @RRESTART  # Rolling restart
               check_status
