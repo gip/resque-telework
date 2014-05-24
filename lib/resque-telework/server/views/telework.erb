@@ -189,13 +189,23 @@ $(document).ready(function() {
     <% for host, status, info in redis.daemons_state %>
       <tr>
       <td><center><% ahost = redis.aliases(host) %>
-      	  <a href=<%= "/resque/telework/host/#{host}" %> title="<%= "#{host}\n#{redis.comments(host)}" %>" >
-      	  <% if ahost!=host %><%= ahost %><% else %>
-      	  <%= host %><% end %></a>
-	      <% if 'Alive'==status && info['cpu_load_1mins'] %><br/><%= "(%.2f%% cpu)" % (100*info['cpu_load_1mins']) %><% end %>
-	      <% if 'Alive'==status && info['load_avg_1mins'] %><br/><%= "(%.2f load)" % (info['load_avg_1mins'].to_f) %><% end %>
-	      <% if 'Alive'==status && info['mem_total'] && info['mem_free'] %>
-	      	       <br/><%= "(%.2f%% mem)" % (100*(1-info['mem_free'].to_f/info['mem_total'].to_f)) %><% end %>
+        <a href=<%= "/resque/telework/host/#{host}" %> title="<%= "#{host}\n#{redis.comments(host)}" %>" >
+        <% if ahost!=host %>
+            <%= ahost %>
+        <% else %>
+          <%= host %>
+        <% end %></a>
+
+        <% if status == 'Alive' %>
+          <% if info['cpu'] %>
+            <br>cpu:
+            <%= info['cpu']['load_1min'] %> / <%= info['cpu']['cores'] %>
+          <% end %>
+          <% if info['mem'] %>
+            <br>mem:
+            <%= info['mem']['free'] %> G free / <%= info['mem']['total'] %> G
+          <% end %>
+        <% end %>
 	     </center>
 	  </td>
       <% if 'Alive'==status || 'Restarting'==status || 'Quitting'==status %>

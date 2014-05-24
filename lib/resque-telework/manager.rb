@@ -2,6 +2,7 @@ module Resque
   module Plugins
     module Telework      
       class Manager
+        require 'vmstat'
         
         include Resque::Plugins::Telework::Redis
         
@@ -76,15 +77,30 @@ module Resque
           @RUN_DAEMON= false if @QUITTING && @WORKERS.empty?
         end
 
-        # Health info
         def health_info
-          require "sys/cpu"
-          load= Sys::CPU.load_avg
-          { :cpu_load_1mins => load[0],
-            :cpu_load_5mins => load[1],
-            :cpu_load_15mins => load[2] }
-        rescue
-          {}
+          cpu_load_info.merge(memory_info)
+        end
+
+        def cpu_load_info
+          {
+            'cpu' => {
+              'load_1min' => Vmstat.load_average.one_minute.round(1),
+              'cores' => Vmstat.cpu.size,
+            }
+          }
+        end
+
+        def memory_info
+          pagesize = Vmstat.memory.pagesize
+          in_use = Vmstat.memory.active + Vmstat.memory.wired
+          free = Vmstat.memory.inactive + Vmstat.memory.free
+
+          {
+            'mem' => {
+              'free' => ((1.0 * free * pagesize) / (1024**3) ).round(1),
+              'total' => ((1.0 * (free + in_use) * pagesize) / (1024**3) ).round(1),
+            }
+          }
         end
         
         # Add a status message on the status queue
