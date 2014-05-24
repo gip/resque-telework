@@ -201,9 +201,9 @@ $(document).ready(function() {
             <br>cpu:
             <%= info['cpu']['load_1min'] %> / <%= info['cpu']['cores'] %>
           <% end %>
-          <% if info['mem_total'] %>
+          <% if info['mem'] %>
             <br>mem:
-            <%= info['mem']['free'] %> free / <%= info['mem']['total'] %> G
+            <%= info['mem']['free'] %> G free / <%= info['mem']['total'] %> G
           <% end %>
         <% end %>
 	     </center>
