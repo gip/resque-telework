@@ -2,6 +2,7 @@ module Resque
   module Plugins
     module Telework      
       class Manager
+        require 'vmstat'
         
         include Resque::Plugins::Telework::Redis
         
@@ -81,7 +82,6 @@ module Resque
         end
 
         def cpu_load_info
-          require 'vmstat'
           {
             'cpu' => {
               'load_1min' => Vmstat.load_average.one_minute.round(1),
@@ -91,7 +91,6 @@ module Resque
         end
 
         def memory_info
-          require 'vmstat'
           pagesize = Vmstat.memory.pagesize
           in_use = Vmstat.memory.active + Vmstat.memory.wired
           free = Vmstat.memory.inactive + Vmstat.memory.free
